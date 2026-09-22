@@ -37,6 +37,17 @@ def main() -> None:
         for args in ([td/'missing.s1p'], [td], [file, '--ports', '3'], [file, '--format', 'no'], [file, '--ports'], [file, '--nope'], [file, file]):
             call(args, 2)
         checks.append('seven path and argument failures return exit 2')
+        guarded = td/'metadata.s1p'
+        for declaration in ('75 0', '50 .01', '50', 'nan 0', '50 0 50 0'):
+            guarded.write_text('# Hz S RI R 50\n1 .1 0\n! Port Impedance ' + declaration + '\n')
+            for mode in ('json', 'csv'):
+                error = json.loads(call([guarded, '--format', mode], 1).stdout)
+                assert not error['ok'] and error['error']['code'] == 'UnsupportedMetadata'
+        checks.append('both CLI exports reject conflicting or malformed impedance metadata')
+        guarded.write_text('# Hz S RI R 75\n1 .1 -.2\n! Port Impedance 75 0\n')
+        result = json.loads(call([guarded], 0).stdout)
+        assert result['reference_ohms'] == 75 and result['samples'][0]['values'][0]['im'] == -.2
+        checks.append('redundant matching impedance metadata preserves S values')
         assert 'Usage:' in call(['--help'], 0).stdout
         checks.append('help is usable without input')
         # Isolate builder with only stale output. The original project is untouched.
