@@ -26,7 +26,9 @@ test "one-port RI and metadata" {
 
 ///|
 test "two-port wire order is S11 S21 S12 S22, not row-major" {
-  let net = parse_touchstone("# Hz S RI R 50\n1 0.1 0.11 0.2 0.22 0.3 0.33 0.4 0.44", 2).unwrap()
+  let net = parse_touchstone(
+    "# Hz S RI R 50\n1 0.1 0.11 0.2 0.22 0.3 0.33 0.4 0.44", 2,
+  ).unwrap()
   assert_near(net.get_s(0, 1, 1).unwrap().re, 0.1)
   assert_near(net.get_s(0, 2, 1).unwrap().re, 0.2)
   assert_near(net.get_s(0, 1, 2).unwrap().re, 0.3)
@@ -53,9 +55,18 @@ test "DB to complex uses voltage ratio divisor twenty" {
 
 ///|
 test "equivalent RI MA DB representations" {
-  let ri = parse_touchstone("# Hz S RI R 50\n1 0 0.1", 1).unwrap().get_s(0, 1, 1).unwrap()
-  let ma = parse_touchstone("# Hz S MA R 50\n1 0.1 90", 1).unwrap().get_s(0, 1, 1).unwrap()
-  let db = parse_touchstone("# Hz S DB R 50\n1 -20 90", 1).unwrap().get_s(0, 1, 1).unwrap()
+  let ri = parse_touchstone("# Hz S RI R 50\n1 0 0.1", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
+  let ma = parse_touchstone("# Hz S MA R 50\n1 0.1 90", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
+  let db = parse_touchstone("# Hz S DB R 50\n1 -20 90", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
   assert_near(ri.re, ma.re)
   assert_near(ri.im, ma.im)
   assert_near(ri.re, db.re)
@@ -89,14 +100,19 @@ test "each supported frequency unit" {
 
 ///|
 test "comments tabs CRLF and trailing blank lines" {
-  let net = parse_touchstone("! sample\r\n  # Hz S RI R 50 ! options\r\n\t1\t.5\t-0.25 ! sample\r\n\r\n", 1).unwrap()
+  let net = parse_touchstone(
+    "! sample\r\n  # Hz S RI R 50 ! options\r\n\t1\t.5\t-0.25 ! sample\r\n\r\n",
+    1,
+  ).unwrap()
   assert_true(net.samples.length() == 1)
   assert_near(net.get_s(0, 1, 1).unwrap().re, 0.5)
 }
 
 ///|
 test "record continuation with intervening comment" {
-  let net = parse_touchstone("# Hz S RI R 50\n1 .1 0 .2 0\n! continued\n.3 0 .4 0", 2).unwrap()
+  let net = parse_touchstone(
+    "# Hz S RI R 50\n1 .1 0 .2 0\n! continued\n.3 0 .4 0", 2,
+  ).unwrap()
   assert_near(net.get_s(0, 1, 2).unwrap().re, 0.3)
 }
 
@@ -161,7 +177,10 @@ test "unknown option" {
 
 ///|
 test "duplicate option categories" {
-  for header in ["# Hz GHz S RI", "# Hz S RI MA", "# Hz S S RI", "# Hz S RI R 50 R 75"] {
+  for
+    header in [
+      "# Hz GHz S RI", "# Hz S RI MA", "# Hz S S RI", "# Hz S RI R 50 R 75",
+    ] {
     expect_error(header + "\n1 0 0", 1, InvalidOption)
   }
 }
@@ -196,7 +215,11 @@ test "empty input and header without samples" {
 
 ///|
 test "invalid decimal grammar" {
-  for text in ["nan", "NaN", "inf", "Infinity", "0x10", "1_000", ".", "+", "1e", "1e+", "1.2.3", "1junk"] {
+  for
+    text in [
+      "nan", "NaN", "inf", "Infinity", "0x10", "1_000", ".", "+", "1e", "1e+", "1.2.3",
+      "1junk",
+    ] {
     expect_error("# Hz S RI R 50\n1 \{text} 0", 1, InvalidNumber)
   }
 }
@@ -236,15 +259,24 @@ test "decibel conversion overflow and underflow" {
 
 ///|
 test "zero magnitude has undefined phase and finite dB absent" {
-  let s = parse_touchstone("# Hz S RI R 50\n1 0 0", 1).unwrap().get_s(0, 1, 1).unwrap()
+  let s = parse_touchstone("# Hz S RI R 50\n1 0 0", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
   assert_true(s.phase_degrees() is None)
   assert_true(s.magnitude_db() is None)
 }
 
 ///|
 test "large and negative angle normalization" {
-  let first = parse_touchstone("# Hz S MA R 50\n1 .5 450", 1).unwrap().get_s(0, 1, 1).unwrap()
-  let second = parse_touchstone("# Hz S MA R 50\n1 .5 -270", 1).unwrap().get_s(0, 1, 1).unwrap()
+  let first = parse_touchstone("# Hz S MA R 50\n1 .5 450", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
+  let second = parse_touchstone("# Hz S MA R 50\n1 .5 -270", 1)
+    .unwrap()
+    .get_s(0, 1, 1)
+    .unwrap()
   assert_near(first.im, 0.5)
   assert_near(first.re, second.re)
   assert_near(first.im, second.im)
@@ -285,7 +317,9 @@ test "safe port and sample lookup" {
 test "CSV export contains units and reference impedance" {
   let net = parse_touchstone("# Hz S RI R 75\n1 .25 .5", 1).unwrap()
   let csv = net.to_csv()
-  assert_true(csv.has_prefix("frequency_hz,reference_ohms,output_port,input_port,re,im\n"))
+  assert_true(
+    csv.has_prefix("frequency_hz,reference_ohms,output_port,input_port,re,im\n"),
+  )
   assert_true(csv.contains("0.25"))
   assert_true(csv.contains("75"))
   assert_true(csv.has_suffix("\n"))

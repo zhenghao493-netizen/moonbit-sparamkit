@@ -41,9 +41,10 @@ def examples():
 def main():
     DIST.mkdir(exist_ok=True)
     compiled = ROOT/'_build/js/release/build/bridge/bridge.js'
-    if compiled.exists():
-        shutil.copyfile(compiled,DIST/'core.cjs')
-    core = (DIST/'core.cjs').read_text()
+    if not compiled.is_file():
+        raise FileNotFoundError('Missing current compiled bridge; run moon build bridge --target js --release --deny-warn first. Refusing stale dist/core.cjs.')
+    core = compiled.read_text(encoding='utf-8')
+    shutil.copyfile(compiled,DIST/'core.cjs')
     if 'SParamKit' not in core:
         raise RuntimeError('Missing compiled bridge; run moon build bridge --target js --release --deny-warn')
     demo = examples()

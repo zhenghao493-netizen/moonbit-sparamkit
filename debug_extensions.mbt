@@ -1,4 +1,5 @@
-///| Keep the debugging methods explicit on the public types.
+///|
+/// Keep the debugging methods explicit on the public types.
 pub extend DataFormat with @debug.Debug::{to_repr}
 
 ///|

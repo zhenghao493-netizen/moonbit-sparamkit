@@ -5,6 +5,8 @@ if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
 }
 moon version --all
 if ($LASTEXITCODE -ne 0) { throw "moon version failed" }
+moon fmt --check
+if ($LASTEXITCODE -ne 0) { throw "moon fmt failed" }
 foreach ($target in @("wasm-gc", "js")) {
   moon check --target $target --deny-warn
   if ($LASTEXITCODE -ne 0) { throw "moon check failed for $target" }

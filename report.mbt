@@ -1,4 +1,5 @@
-///| Encode only finite values: undefined phase and dB must be JSON null.
+///|
+/// Encode only finite values: undefined phase and dB must be JSON null.
 fn report_number(value : Double?) -> Json {
   match value {
     Some(number) if finite(number) => @json.to_json(number)
@@ -21,15 +22,24 @@ fn report_error(error : Diagnostic) -> String {
   result.stringify()
 }
 
-///| The interactive boundary is smaller than the standalone parser limit.
+///|
+/// The interactive boundary is smaller than the standalone parser limit.
 fn parse_for_report(text : String, ports : Int) -> Result[Network, Diagnostic] {
   if text.length() > 2097152 {
-    return Err(diagnostic(InputLimit, 1, 1, "Interactive input exceeds 2 Mi UTF-16 code units"))
+    return Err(
+      diagnostic(
+        InputLimit,
+        1,
+        1,
+        "Interactive input exceeds 2 Mi UTF-16 code units",
+      ),
+    )
   }
   parse_touchstone(text, ports, max_samples=20000)
 }
 
-///| Stable JSON boundary shared by the browser and Node CLI. No host parser.
+///|
+/// Stable JSON boundary shared by the browser and Node CLI. No host parser.
 /// Values are explicitly labeled so consumers need not depend on wire order.
 /// This interface has a 2 Mi code-unit / 20000 sample budget.
 pub fn analyze_touchstone_json(text : String, ports : Int) -> String {
@@ -75,7 +85,8 @@ pub fn analyze_touchstone_json(text : String, ports : Int) -> String {
   result.stringify()
 }
 
-///| Export normalized CSV through the same checked boundary and limits.
+///|
+/// Export normalized CSV through the same checked boundary and limits.
 pub fn export_touchstone_csv_json(text : String, ports : Int) -> String {
   match parse_for_report(text, ports) {
     Err(error) => report_error(error)

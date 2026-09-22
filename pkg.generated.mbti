@@ -1,0 +1,98 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ttxiangshang/sparamkit"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn analyze_touchstone_json(String, Int) -> String
+
+pub fn export_touchstone_csv_json(String, Int) -> String
+
+pub fn parse_touchstone(String, Int, max_samples? : Int) -> Result[Network, Diagnostic]
+
+// Errors
+
+// Types and methods
+pub(all) struct Complex {
+  re : Double
+  im : Double
+} derive(@debug.Debug)
+pub fn Complex::magnitude(Self) -> Double
+pub fn Complex::magnitude_db(Self) -> Double?
+pub fn Complex::phase_degrees(Self) -> Double?
+pub fn Complex::to_repr(Self) -> @debug.Repr
+
+pub(all) enum DataFormat {
+  RI
+  MA
+  DB
+} derive(Eq, @debug.Debug)
+pub fn DataFormat::equal(Self, Self) -> Bool
+pub fn DataFormat::not_equal(Self, Self) -> Bool
+pub fn DataFormat::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Diagnostic {
+  code : ErrorCode
+  line : Int
+  column : Int
+  message : String
+} derive(@debug.Debug)
+pub fn Diagnostic::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ErrorCode {
+  UnsupportedPorts
+  InputLimit
+  TokenLimit
+  LineTokenLimit
+  SampleLimit
+  MissingOptions
+  DuplicateOptions
+  InvalidOption
+  UnsupportedParameter
+  UnsupportedVersion
+  InvalidNumber
+  NumericRange
+  InvalidReference
+  InvalidMagnitude
+  InvalidFrequency
+  FrequencyOrder
+  ExtraFields
+  IncompleteRecord
+  NoData
+} derive(Eq, @debug.Debug)
+pub fn ErrorCode::equal(Self, Self) -> Bool
+pub fn ErrorCode::not_equal(Self, Self) -> Bool
+pub fn ErrorCode::to_repr(Self) -> @debug.Repr
+
+pub(all) enum FrequencyUnit {
+  Hz
+  KHz
+  MHz
+  GHz
+} derive(Eq, @debug.Debug)
+pub fn FrequencyUnit::equal(Self, Self) -> Bool
+pub fn FrequencyUnit::not_equal(Self, Self) -> Bool
+pub fn FrequencyUnit::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Network {
+  ports : Int
+  reference_ohms : Double
+  source_unit : FrequencyUnit
+  source_format : DataFormat
+  samples : Array[Sample]
+} derive(@debug.Debug)
+pub fn Network::get_s(Self, Int, Int, Int) -> Complex?
+pub fn Network::to_csv(Self) -> String
+pub fn Network::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Sample {
+  frequency_hz : Double
+  values : Array[Complex]
+} derive(@debug.Debug)
+pub fn Sample::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

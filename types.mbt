@@ -1,4 +1,5 @@
-///| Source representation; normalized samples always contain real/imaginary pairs.
+///|
+/// Source representation; normalized samples always contain real/imaginary pairs.
 pub(all) enum DataFormat {
   RI
   MA
@@ -45,7 +46,8 @@ pub(all) enum ErrorCode {
 ///|
 pub extend ErrorCode with Eq::{equal, not_equal}
 
-///| Positions are one-based. Column counts Unicode characters, not encoded bytes.
+///|
+/// Positions are one-based. Column counts Unicode characters, not encoded bytes.
 pub(all) struct Diagnostic {
   code : ErrorCode
   line : Int
@@ -59,13 +61,15 @@ pub(all) struct Complex {
   im : Double
 } derive(@debug.Debug)
 
-///| Entries use Touchstone two-port order: S11, S21, S12, S22.
+///|
+/// Entries use Touchstone two-port order: S11, S21, S12, S22.
 pub(all) struct Sample {
   frequency_hz : Double
   values : Array[Complex]
 } derive(@debug.Debug)
 
-///| Caller-created values are not automatically validated; parser results are.
+///|
+/// Caller-created values are not automatically validated; parser results are.
 pub(all) struct Network {
   ports : Int
   reference_ohms : Double
@@ -89,8 +93,13 @@ priv struct Options {
 }
 
 ///|
-fn diagnostic(code : ErrorCode, line : Int, column : Int, message : String) -> Diagnostic {
-  { code, line, column, message }
+fn diagnostic(
+  code : ErrorCode,
+  line : Int,
+  column : Int,
+  message : String,
+) -> Diagnostic {
+  { code, line, column, message, }
 }
 
 ///|
@@ -108,15 +117,27 @@ fn FrequencyUnit::scale(self : FrequencyUnit) -> Double {
   }
 }
 
-///| Ports are one-based: get_s(0, 2, 1) retrieves S21 at the first frequency.
-pub fn Network::get_s(self : Network, sample_index : Int, output_port : Int, input_port : Int) -> Complex? {
-  if self.ports != 1 && self.ports != 2 { return None }
-  if output_port < 1 || output_port > self.ports || input_port < 1 || input_port > self.ports {
+///|
+/// Ports are one-based: get_s(0, 2, 1) retrieves S21 at the first frequency.
+pub fn Network::get_s(
+  self : Network,
+  sample_index : Int,
+  output_port : Int,
+  input_port : Int,
+) -> Complex? {
+  if self.ports != 1 && self.ports != 2 {
+    return None
+  }
+  if output_port < 1 ||
+    output_port > self.ports ||
+    input_port < 1 ||
+    input_port > self.ports {
     return None
   }
   match self.samples.get(sample_index) {
     None => None
-    Some(sample) => sample.values.get((input_port - 1) * self.ports + output_port - 1)
+    Some(sample) =>
+      sample.values.get((input_port - 1) * self.ports + output_port - 1)
   }
 }
 
@@ -125,14 +146,18 @@ pub fn Complex::magnitude(self : Complex) -> Double {
   @math.hypot(self.re, self.im)
 }
 
-///| Zero magnitude has no finite dB value. Invalid caller-created values return None.
+///|
+/// Zero magnitude has no finite dB value. Invalid caller-created values return None.
 pub fn Complex::magnitude_db(self : Complex) -> Double? {
   let amplitude = self.magnitude()
-  if !finite(amplitude) || amplitude <= 0.0 { return None }
+  if !finite(amplitude) || amplitude <= 0.0 {
+    return None
+  }
   Some(20.0 * @math.log10(amplitude))
 }
 
-///| Phase is undefined for exactly zero; angles are returned in degrees.
+///|
+/// Phase is undefined for exactly zero; angles are returned in degrees.
 pub fn Complex::phase_degrees(self : Complex) -> Double? {
   if !finite(self.re) || !finite(self.im) || (self.re == 0.0 && self.im == 0.0) {
     return None
