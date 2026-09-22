@@ -1,0 +1,33 @@
+name: Development bootstrap
+on:
+  push:
+    branches: [hardening/compatibility-packaging]
+    paths: [.github/workflows/dev-bootstrap.yml]
+permissions:
+  contents: read
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install official toolchain and capture source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bootstrap
+          curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/install-moon.sh
+          bash /tmp/install-moon.sh
+          "$HOME/.moon/bin/moon" version --all > /tmp/bootstrap/version.txt
+          git archive --format=tar.gz HEAD > /tmp/bootstrap/source.tar.gz
+          # Only fresh compiler and standard-library directories; no credentials,
+          # repository metadata, user home files or environment variables.
+          tar --exclude=.git -czf /tmp/bootstrap/toolchain.tar.gz -C "$HOME/.moon" bin lib
+          sha256sum /tmp/bootstrap/*.tar.gz > /tmp/bootstrap/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: development-bootstrap
+          path: /tmp/bootstrap/
+          retention-days: 1
