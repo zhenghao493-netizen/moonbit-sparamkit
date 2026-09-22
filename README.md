@@ -1,107 +1,124 @@
 # MoonBit SParamKit
 
-[![Verify SParamKit](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml)
-[![Build SParamKit Tool](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml)
-[![Package verification](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml)
-[![Cross-platform delivery](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml)
+[![Tests](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml)
+[![Workbench](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml)
+[![Package](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml)
+[![Platforms](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml)
 
-MoonBit 原生的一端口、二端口 Touchstone S 参数解析、数值表示归一化与离线可视化工具。
+SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`、`.s2p` 文件的解析、检查和可视化。导入文件后，可以查看 S 参数的幅度、相位曲线，并将结果导出为 CSV 或 JSON。
 
-**版本：`0.1.0-dev.5`，开发预览。尚未发布 Mooncakes，也不是完整标准兼容性认证或比赛验收结论。** 这里的归一化指频率单位及 RI/MA/DB 表示转换，不是将任意参考阻抗转换为 50 Ω。
+项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-## 直接体验
+版本：`0.1.0-dev.5` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
 
-在成功的 [工具构建运行](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/runs/35748629493) 中下载 `sparamkit-tool`，解压后打开 `index.html`。获取 Actions 附件可能需要登录 GitHub；下载后的工作台不需要登录、安装 MoonBit 或联网。附件保留 30 天，之后可从源码重建。未部署 GitHub Pages。
+## 功能
 
-选择、拖入 `.s1p` / `.s2p` 或粘贴文本，切换 S11 / S21 / S12 / S22 与线性/对数频率轴，查看幅度、相位曲线并导出全量 CSV / JSON。分页不截断导出；内置 RC / RLC 样例为合成数据。
+- **文件解析**：读取一端口、二端口 Touchstone 数据，支持注释、科学计数法、跨行记录和常见换行格式。
+- **数值处理**：统一 Hz / kHz / MHz / GHz 单位，转换 RI / MA / DB 表示，提供复数值、幅度、分贝和相位查询。
+- **数据检查**：定位非法选项、不完整记录、频率顺序和已识别的端口阻抗冲突，返回错误码、行列位置及原因。
+- **离线工作台**：支持文件选择、拖放与文本粘贴，切换 S 参数和频率轴，查看曲线与分页数据表。
+- **完整导出**：输出全部频点和参数的 CSV / JSON；浏览器与 CLI 使用同一套 MoonBit 核心。
 
-自包含 HTML 无在线 API、外部字体和遥测。Blob Worker 调用实际编译的 MoonBit 核心；JavaScript 只处理文件、消息、界面和绘图。输入变更或解析失败会清空旧曲线、禁用导出。同一文件可再次选择；旧的异步请求不会覆盖新输入的结果或解锁仍在进行的新分析。
+## 快速体验
 
-首次使用见 [试用与交付说明](docs/GETTING_STARTED.md)。完整运行包另有 `manifest.json` 和 `verify_download.py`，Python 可检查包内文件是否一致；校验和不是数字签名。单独保存 HTML 的使用不需要 Python。
+在 [工具构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml) 选择一次成功运行，从 **Artifacts** 下载 `sparamkit-tool`。解压后，用桌面浏览器打开 `index.html`。
 
-## 当前验证与修正
+工作台不需要安装 MoonBit、启动服务器或联网。首次打开会载入双端口陷波样例，也可以切换到单端口 RC 负载，或直接导入自己的文件。内置样例为合成电路数据。
 
-继续“MoonBit 数据处理核心＋离线工具”的定位，不扩成射频仿真平台。保留 dev.4 的 `! Port Impedance` 一致性保护：仅接受与头部 R 完全一致的单行逐端口纯实数声明；冲突、复阻抗、不完整或歧义形式返回带位置的 `UnsupportedMetadata`。这不是通用 HFSS 导入或阻抗重归一化。
-
-本轮修正同文件重复导入、异步分析按钮状态和重复 CSV 操作，统一构建文本与测试子进程的 UTF-8 编码，并增加可核对的版本和文件清单。核心算法及 86 个 MoonBit 单元用例保持不变。
-
-| 实际验证层 | 结果 |
-| --- | --- |
-| MoonBit JS / wasm-gc | 各 86/86；严格类型检查、构建、示例通过 |
-| Windows | 实际运行 PowerShell 验证脚本、源码包重建和文件 CLI；默认 cp1252、UTF-8 模式关闭时中文测试通过 |
-| 浏览器 | Linux Chromium / Firefox / WebKit、Windows Chromium，各 22 项本地文件场景通过 |
-| CLI 与运行包 | 14 组检查；11 个运行包文件的哈希校验通过 |
-| 独立数值回归 | 77 份合成文件 / 4398 个复数值，以及 2 份公开样例 / 141 个复数值通过 |
-| 源码包 | 49 个文件，独立解压后重建、测试和工作台生成通过 |
-
-证据、实际浏览器版本、提交和运行标识见 [DELIVERY.md](verification/DELIVERY.md)。这是同一套用例在不同环境重复执行，不虚增独立用例数；WebKit 测试不等于苹果 Safari，390px 视口不等于手机真机。历史记录见 [METADATA_GUARD.md](verification/METADATA_GUARD.md)、[HARDENING.md](verification/HARDENING.md) 和 [STATUS.md](verification/STATUS.md)。
+选择 S11 / S21 / S12 / S22 查看曲线，按需切换线性或对数频率轴，再点击 CSV 或 JSON 导出。编辑输入后重新解析即可。
 
 ## 从源码构建
 
-准备官方 MoonBit 工具链、Node.js 22 和 Python 3.11+：
+准备 [MoonBit 工具链](https://www.moonbitlang.com/download/)、Node.js 22 和 Python 3.11+：
 
 ```bash
 git clone https://github.com/zhenghao493-netizen/moonbit-sparamkit.git
 cd moonbit-sparamkit
-bash tools/verify.sh
 moon build bridge --target js --release --deny-warn
 python tools/build_web.py
-node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json
-node dist/cli.cjs dist/samples/synthetic_notch.s2p --format csv > result.csv
-python dist/verify_download.py
-python tools/test_host.py
-python tools/check_package.py
 ```
 
-浏览器打开 `dist/index.html`。CLI 默认从 `.s1p` / `.s2p` 后缀识别端口；其他后缀用 `--ports 1` 或 `--ports 2`。退出码：0 成功；1 解析失败（结构化 JSON）；2 文件或参数错误（标准错误输出）。`cmd/main` 是内置 CSV 示例，文件 CLI 是 `dist/cli.cjs`。Windows 可用 PowerShell 运行 `./tools/verify.ps1`，再执行上面相同的构建与 Python / Node 命令；该脚本已在云端 Windows 验证。
+构建结果位于 `dist/`，浏览器打开 `dist/index.html` 即可使用。
 
-## 核心 API
+### 命令行
 
-- `parse_touchstone(text, ports)` 返回 `Result[Network, Diagnostic]`，显式指定 1 / 2 端口。
-- `Network::get_s(sample_index, output_port, input_port)`：样本索引从 0、端口从 1 开始。
-- `Complex::magnitude`、`magnitude_db`、`phase_degrees`；零幅度的有限 dB 和相位为 `None`，JSON 为 `null`。
-- `Network::to_csv` 导出全量长表；`analyze_touchstone_json`、`export_touchstone_csv_json` 是浏览器/CLI 共用的带版本号 JSON 接口。
+```bash
+# 读取双端口文件，输出 JSON
+node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json
 
-在本地工作区其他包的 `moon.pkg` 导入 `"ttxiangshang/sparamkit" @sparam` 后：
+# 导出 CSV
+node dist/cli.cjs dist/samples/synthetic_notch.s2p --format csv > result.csv
 
-```moonbit nocheck
-let text = "# GHz S RI R 50\n1 0.1 0 0.8 -0.1 0.7 -0.2 0.2 0\n"
-match @sparam.parse_touchstone(text, 2) {
-  Ok(network) => println(network.to_csv())
-  Err(error) => println("line \{error.line}:\{error.column}: \{error.message}")
+# 非标准后缀的文件可手动指定端口数
+node dist/cli.cjs input.txt --ports 1 --format json
+```
+
+CLI 根据 `.s1p` / `.s2p` 后缀识别端口数。退出码为 `0`（成功）、`1`（数据检查失败）、`2`（文件或命令参数错误）。
+
+### MoonBit API
+
+在本地工作区的入口包中使用核心库，`moon.pkg` 配置如下：
+
+```moonbit
+import {
+  "ttxiangshang/sparamkit" @sparam,
+}
+
+pkgtype(kind: "executable")
+```
+
+```moonbit
+fn main {
+  let text = "# GHz S RI R 50\n1 0.1 0 0.8 -0.1 0.7 -0.2 0.2 0\n"
+  match @sparam.parse_touchstone(text, 2) {
+    Ok(network) => {
+      let s21 = network.get_s(0, 2, 1).unwrap()
+      println(s21.magnitude())
+      println(network.to_csv())
+    }
+    Err(error) =>
+      println("line \{error.line}:\{error.column}: \{error.message}")
+  }
 }
 ```
 
-尚未发布，不要假设 `moon add` 已可用。
+`get_s(0, 2, 1)` 获取第一个频点的 S21：样本索引从 0 开始，端口从 1 开始。更多接口见 [API 定义](pkg.generated.mbti)。目前通过运行包或源码使用，Mooncakes 包列入后续发布计划。
 
-## 支持边界
+## 格式支持
 
-仅明确限定的 Touchstone 1.x 一/二端口 S 参数、单一有限正实数参考阻抗。二端口顺序为 S11、S21、S12、S22。要求一个 `#` 选项行；缺省 GHz / S / MA / 50 Ω；频率非负、严格递增；每条逻辑记录从新行开始，可跨行。支持 LF/CRLF/CR、一个初始 BOM、注释、科学计数法、RI/MA/DB 及四种频率单位。
+| 项目 | 支持范围 |
+| --- | --- |
+| 文件 | Touchstone 1.x 的一端口、二端口 S 参数子集 |
+| 数值格式 | RI、MA、DB；频率单位为 Hz、kHz、MHz、GHz |
+| 参考阻抗 | 各端口共用一个正实数参考阻抗，保留文件头的 R 值 |
+| 文本 | UTF-8、LF / CRLF / CR 换行、一个开头 BOM、注释与科学计数法 |
+| 工作台与 CLI 输入 | 文件不超过 2 MiB，最多 20,000 个频点 |
 
-不支持 2.0 关键字、多端口、Y/Z/H/G、噪声块、仪器控制、校准、去嵌入、任意厂商元数据或阻抗重归一化。已识别 `Port Impedance` 只做一致性保护，未知标签仍可能按普通注释处理。完整限制见 [COMPATIBILITY.md](docs/COMPATIBILITY.md)。
+数据前需要 `#` 选项行，频率须非负且严格递增。二端口文件按 S11、S21、S12、S22 顺序读取。零幅度的分贝与相位在界面中留空，在 JSON 中记为 `null`。
 
-核心上限 8 Mi UTF-16 code units / 100000 样本；交互 JSON 上限 2 Mi code units / 20000 样本；文件上限 2 MiB UTF-8。非法数值、溢出、非零十进制数下溢为零时报错。公开结构可由外部构造，解析器保证不自动适用于这些外部数据。
+暂不支持 Touchstone 2.0 关键字、多端口、噪声参数和阻抗重归一化。对识别到的 `Port Impedance` 声明会检查其与文件头是否一致；其他厂商扩展的处理方式、资源限制和绘图约定见 [兼容性说明](docs/COMPATIBILITY.md)。
 
-对数轴只在图上省略 0 Hz；表格与导出保留。相位为主值，不跨 ±180° 跳变连线，不做展开、插值或平滑。
-
-## 独立核验与交付
+## 开发与测试
 
 ```bash
-python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
-python -m playwright install chromium
-python tools/crosscheck.py
-python tools/test_measured.py
-python tools/test_browser.py
+# 核心检查、构建和测试（JS / wasm-gc）
+bash tools/verify.sh
+
+# 构建工作台后，运行 CLI 与运行包检查
+python tools/test_host.py
+
+# 检查源码包并在新目录中重新构建
+python tools/check_package.py
 ```
 
-先构建 `dist/`；Linux 可能还需要 Playwright 系统依赖。可额外安装 Firefox / WebKit，并设置 `BROWSER_NAME=firefox` 或 `BROWSER_NAME=webkit` 运行同一浏览器脚本；完整步骤见 `.github/workflows/platforms.yml`。
+Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node 命令相同。
 
-公开样例的版本、内容哈希、来源与限定见 [TEST_DATA.md](docs/TEST_DATA.md)。上游标注的测量样例不是本项目重新采集的数据。复现步骤见 [ACCEPTANCE.md](docs/ACCEPTANCE.md)。源包验证不等于已发布 Mooncakes。
+核心库包含 86 个单元测试，分别运行在 JS 和 wasm-gc 上。CI 还覆盖 scikit-rf 数值对照、公开文件样例、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/DELIVERY.md)。
 
-Android / iOS 真机、苹果 Safari、macOS 及外部用户独立试用仍未完成；自动化测试不替代这些验证。
+解析、数值转换、诊断和数据导出在 MoonBit 中实现；`bridge/` 提供调用入口，`web/` 负责界面，`tools/` 包含 CLI 包装、构建和测试脚本。Python 与 scikit-rf 用于构建及测试。
 
-## 独立性与来源
+## 项目与许可
 
-本项目独立于 WaveKit 音频、CalendarKit 日历和 PixelKit 寻路，不通过改名或拆分旧项目构成本期成果。Python/scikit-rf 仅用于构建或独立测试，不是运行时解析器，不复制其解析器源码。AI 辅助用于实现、测试和文档，参赛者负责理解、审阅与交付质量。
+本项目参加 2026 MoonBit 黑客松，方向为数据处理。开发中使用 AI 辅助编码、测试和文档整理，格式参考与测试数据来源分别见 [参考资料](docs/REFERENCES.md) 和 [测试数据说明](docs/TEST_DATA.md)。
 
-[参考资料](docs/REFERENCES.md) · [MIT 许可证](LICENSE)。
+采用 [MIT 许可证](LICENSE)。
