@@ -1,0 +1,16 @@
+{
+  "code_commit": "0b34674c33134c446d16128ccd043305e2e386d8",
+  "core_run": 35732045283,
+  "tool_run": 35732045186,
+  "source": "Downloaded GitHub Actions artifacts, inspected 2026-09-22",
+  "unit_js": {"total":54,"passed":54,"failed":0},
+  "unit_wasm_gc": {"total":54,"passed":54,"failed":0},
+  "crosscheck": {
+    "status":"passed", "seed":20260922, "scikit_rf":"1.8.0", "numpy":"2.2.6",
+    "cases":77, "complex_values":4398, "max_abs_complex_error":6.938893903907228e-16,
+    "relative_tolerance":1e-10, "absolute_tolerance":1e-12,
+    "scope":"synthetic common subset only; not full conformance or measured-hardware validation"
+  },
+  "browser": {"status":"passed", "mode":"file", "checks":15, "mobile_viewport_width":390},
+  "compiled_core_sha256":"9ad2f8852af8ec3836bfcd54ff669cd5e5c21520bc4fe12cf8c8c3d2ab7759a0"
+}
