@@ -1,6 +1,6 @@
 ///|
 fn assert_near(actual : Double, expected : Double) -> Unit raise {
-  assert_true((actual - expected).abs() <= 1e-11 * (1.0 + expected.abs()))
+  assert_true((actual - expected).abs() <= 1.0e-11 * (1.0 + expected.abs()))
 }
 
 ///|
@@ -65,7 +65,7 @@ test "equivalent RI MA DB representations" {
 ///|
 test "option defaults are GHz S MA R50" {
   let net = parse_touchstone("#\n1 1 90", 1).unwrap()
-  assert_near(net.samples[0].frequency_hz, 1e9)
+  assert_near(net.samples[0].frequency_hz, 1.0e9)
   assert_near(net.reference_ohms, 50.0)
   assert_true(net.source_format == MA)
   assert_near(net.get_s(0, 1, 1).unwrap().im, 1.0)
@@ -111,7 +111,7 @@ test "scientific notation and explicit positive sign" {
 test "optional header values and recognized order" {
   let net = parse_touchstone("# S RI R 75 MHz\n2 0 0", 1).unwrap()
   assert_near(net.reference_ohms, 75.0)
-  assert_near(net.samples[0].frequency_hz, 2e6)
+  assert_near(net.samples[0].frequency_hz, 2.0e6)
 }
 
 ///|

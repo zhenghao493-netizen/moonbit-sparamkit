@@ -3,7 +3,10 @@ pub(all) enum DataFormat {
   RI
   MA
   DB
-} derive(Show, Eq)
+} derive(@debug.Debug, Eq)
+
+///|
+pub extend DataFormat with Eq::{equal, not_equal}
 
 ///|
 pub(all) enum FrequencyUnit {
@@ -11,7 +14,10 @@ pub(all) enum FrequencyUnit {
   KHz
   MHz
   GHz
-} derive(Show, Eq)
+} derive(@debug.Debug, Eq)
+
+///|
+pub extend FrequencyUnit with Eq::{equal, not_equal}
 
 ///|
 pub(all) enum ErrorCode {
@@ -34,7 +40,10 @@ pub(all) enum ErrorCode {
   ExtraFields
   IncompleteRecord
   NoData
-} derive(Show, Eq)
+} derive(@debug.Debug, Eq)
+
+///|
+pub extend ErrorCode with Eq::{equal, not_equal}
 
 ///| Positions are one-based. Column counts Unicode characters, not encoded bytes.
 pub(all) struct Diagnostic {
@@ -42,19 +51,19 @@ pub(all) struct Diagnostic {
   line : Int
   column : Int
   message : String
-} derive(Show)
+} derive(@debug.Debug)
 
 ///|
 pub(all) struct Complex {
   re : Double
   im : Double
-} derive(Show)
+} derive(@debug.Debug)
 
 ///| Entries use Touchstone two-port order: S11, S21, S12, S22.
 pub(all) struct Sample {
   frequency_hz : Double
   values : Array[Complex]
-} derive(Show)
+} derive(@debug.Debug)
 
 ///| Caller-created values are not automatically validated; parser results are.
 pub(all) struct Network {
@@ -63,17 +72,17 @@ pub(all) struct Network {
   source_unit : FrequencyUnit
   source_format : DataFormat
   samples : Array[Sample]
-} derive(Show)
+} derive(@debug.Debug)
 
 ///|
-struct Token {
+priv struct Token {
   text : String
   line : Int
   column : Int
 }
 
 ///|
-struct Options {
+priv struct Options {
   unit : FrequencyUnit
   format : DataFormat
   reference : Double
