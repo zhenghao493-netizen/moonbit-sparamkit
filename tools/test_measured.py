@@ -28,9 +28,17 @@ def main() -> int:
             blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
             if blob != expected_blob:
                 raise RuntimeError(f'{name}: upstream fixture content differs from pinned Git blob')
+            # Vendor comments may encode complex/per-port impedances. These
+            # particular fixtures must really share the supported real 50 ohms.
+            network = skrf.Network(str(path))
+            if not ((network.z0.real == 50).all() and (network.z0.imag == 0).all()):
+                raise RuntimeError(f'{name}: reference impedance lies outside tested common-real subset')
             count, error = verify(path)
             report['files'].append({'file': name, 'git_blob': blob,
                                     'sha256': hashlib.sha256(data).hexdigest(),
+                                    'sample_count': len(network.f),
+                                    'ports': network.nports,
+                                    'reference_ohms': 50,
                                     'complex_values': count, 'max_abs_error': error,
                                     'source': 'scikit-rf/scikit-rf@v1.8.0/skrf/data/' + name})
         report['cases'] = len(report['files'])
