@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import sys
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,7 +64,7 @@ def main() -> None:
                                   text=True, encoding='utf-8', capture_output=True, timeout=20)
             assert proc.returncode == code, (proc.stdout, proc.stderr)
             return proc
-        assert json.loads(integrity(0).stdout)['version'] == '0.1.0-dev.5'
+        assert json.loads(integrity(0).stdout)['version'] == tomllib.loads((ROOT/'moon.mod').read_text(encoding='utf-8'))['version']
         checks.append('download manifest verifies all delivered file bytes')
         core = delivered/'core.cjs'; original = core.read_bytes()
         core.write_bytes(original+b'// modified')

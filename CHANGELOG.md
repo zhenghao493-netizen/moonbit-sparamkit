@@ -1,39 +1,39 @@
 # Changelog
 
+## 0.1.0-dev.6
+
+- Add linked frequency readouts for magnitude and phase plots, with mouse, slider and keyboard selection.
+- Keep the selected frequency when switching S parameters; clicking a curve reveals the matching table page.
+- Add a diagnostic shortcut that selects the failing text field.
+- Cache the selected parameter's data and avoid rebuilding plots when paging or moving the readout.
+- Test complete 20,000-point JSON/CSV exports and rejection at 20,001 points.
+- Read the expected package version from moon.mod in host tests.
+
+## 0.1.0-dev.5 — 2026-09-22
+
+- Fix repeat selection of the same file, stale analysis completion and pending CSV exports.
+- Use explicit UTF-8 encoding in build scripts and host tests.
+- Add version/build identifiers, a file manifest and an offline integrity checker.
+- Add Linux Chromium, Firefox and WebKit tests, plus Windows Chromium and PowerShell verification.
+
+## 0.1.0-dev.4 — 2026-09-22
+
+- Check recognized Port Impedance declarations against the common reference impedance.
+- Reject conflicting, complex or incomplete declarations with positioned diagnostics.
+- Add 14 core tests, bringing the suite to 86 cases.
+
 ## 0.1.0-dev.3 — 2026-09-22
 
-### Fixed
-
-- Accept pure CR and mixed CR/LF/CRLF without merging physical records or corrupting diagnostic line numbers.
-- Accept exactly one initial BOM; do not silently strip embedded or repeated markers.
-- Refuse an offline build when the compiled bridge is absent instead of reusing a stale dist/core.cjs.
-
-### Added
-
-- 18 compatibility regression tests, bringing the core suite to 72 tests. Includes 24 option permutations and all eight two-port continuation boundaries inside those test definitions.
-- Format checking, canonical generated API checks, fresh source ZIP inspection, isolated extraction/rebuild and packaged CLI execution.
-- Eight CLI/build integration groups and a BOM/CR browser file-input scenario.
-- Two content-locked, upstream-labelled measured sample comparisons, separate from the 77-file synthetic corpus; no fixture bytes or parser source vendored.
-- Explicit compatibility matrix, data-provenance document and reviewer reproduction guide.
-
-### Verification
-
-Tests and their limitations are recorded per code commit in [verification/HARDENING.md](verification/HARDENING.md). This is a development preview, not a Mooncakes publication or contest acceptance.
+- Support CR and mixed line endings, with accurate diagnostic positions.
+- Accept one initial BOM and reject embedded or repeated markers.
+- Reject builds with a missing compiled bridge instead of reusing stale output.
+- Add 18 compatibility tests, source-package reconstruction and generated API checks.
+- Add provenance-locked comparisons for two public scikit-rf examples.
 
 ## 0.1.0-dev.2 — 2026-09-22
 
-### Initial core
+- Implement one/two-port Touchstone S-parameter parsing, RI/MA/DB conversion, diagnostics and CSV/JSON export.
+- Add the offline browser workbench, shared MoonBit bridge, Node CLI and synthetic RC/RLC examples.
+- Add 54 MoonBit tests, a 77-file scikit-rf comparison corpus and browser interaction tests.
 
-- One/two-port strict Touchstone S-parameter parsing and RI/MA/DB conversion.
-- Line/column diagnostics, numerical range checks, bounded tokens and records.
-- S-parameter lookup, magnitude/phase helpers, CSV export.
-- Initial 46 MoonBit tests and three synthetic input fixtures, then eight checked JSON report tests (54 total at the offline-workbench milestone).
-- JS and wasm-gc verification jobs with retained logs.
-- Offline single HTML, shared MoonBit bridge, Node file CLI, deterministic RC/RLC demos, 77-file scikit-rf comparison and 15 browser scenarios.
-
-### Corrections after real execution
-
-- Corrected three exponent literals in tests; input-file decimal grammar was unchanged.
-- Migrated Show derivation to Debug, made trait extensions explicit, marked internal types private and enabled --deny-warn.
-
-Historical core and offline-workbench results are retained in [verification/STATUS.md](verification/STATUS.md). Earlier tests did not establish full Touchstone conformance or hardware accuracy.
+Detailed test runs are recorded in [verification/](verification/).
