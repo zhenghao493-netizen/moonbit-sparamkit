@@ -4,7 +4,9 @@
 
 MoonBit 原生的一端口、二端口 Touchstone S 参数解析与数值归一化工具库。
 
-**状态：开发中。初次导入的源码尚待 GitHub Actions 编译验证，不是验收版或已发布的 Mooncakes 包。以具体提交的 Actions 日志为准。**
+**状态：核心库已通过云端编译和测试，仍处于开发阶段，不是完整参赛验收版，也尚未发布到 Mooncakes。**
+
+2026-09-22，代码提交 `133f6be4bc97710862253473c47a7e811a0297de` 的 [GitHub Actions 第 3 次运行](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/runs/35729074198) 已实际完成：JS 和 wasm-gc 均通过 `check`、`build`、`test` 和内置示例，全部启用 `--deny-warn`。两个目标各通过 **46/46** 测试。详细环境与边界见 [verification/STATUS.md](verification/STATUS.md)。
 
 ## 当前功能范围
 
@@ -16,29 +18,32 @@ MoonBit 原生的一端口、二端口 Touchstone S 参数解析与数值归一�
 - 带行列位置的错误诊断，以及输入、样本和 token 限制。
 - 幅度、有限 dB、相位计算及长表 CSV 输出。
 
-`core_wbtest.mbt` 中有 40 个测试定义，`hardening_wbtest.mbt` 中有 6 个，总计 46 个。测试定义数不等于通过数。
+`core_wbtest.mbt` 包含 40 个测试，`hardening_wbtest.mbt` 包含 6 个；同一套 46 个用例分别在两个目标执行，不是 92 个独立用例。
 
 ## 复现
 
 安装官方工具链：https://www.moonbitlang.com/download/
 
 ```bash
+git clone https://github.com/zhenghao493-netizen/moonbit-sparamkit.git
+cd moonbit-sparamkit
 bash tools/verify.sh
 ```
 
 或分别执行：
 
 ```bash
-moon check --target wasm-gc
-moon build --target wasm-gc
-moon test --target wasm-gc
-moon check --target js
-moon build --target js
-moon test --target js
-moon run cmd/main --target js
+moon check --target wasm-gc --deny-warn
+moon build --target wasm-gc --deny-warn
+moon test --target wasm-gc --deny-warn
+moon run cmd/main --target wasm-gc --deny-warn
+moon check --target js --deny-warn
+moon build --target js --deny-warn
+moon test --target js --deny-warn
+moon run cmd/main --target js --deny-warn
 ```
 
-Windows 可执行 `powershell -ExecutionPolicy Bypass -File tools/verify.ps1`。
+Windows 可执行 `powershell -ExecutionPolicy Bypass -File tools/verify.ps1`；该脚本尚未在 Windows 环境执行验证。
 
 `cmd/main` 目前只运行内置合成二端口样例并输出 CSV，**还不是文件输入 CLI**。
 每次 push 的 CI 分别运行 JS 与 wasm-gc 检查，并保留日志附件。工作流只读代码，不发布包，不需要配置密钥。
@@ -55,7 +60,7 @@ match @sparam.parse_touchstone(text, 2) {
     println(s21.magnitude())
     println(network.to_csv())
   }
-  Err(error) => println(error)
+  Err(error) => println("line \{error.line}:\{error.column}: \{error.message}")
 }
 ```
 
@@ -76,12 +81,12 @@ match @sparam.parse_touchstone(text, 2) {
 - 一次性文本解析，不是流式接口；不自动处理 BOM。
 - 公开结构可由调用方构造，解析成功的约束不自动适用于任意调用方构造的数据。
 
-`samples/` 全部为合成样例，不是真实仪器测量。
+`samples/` 全部为合成样例，不是真实仪器测量。测试通过不等于全面格式兼容或测量结果准确性认证。
 
 ## 后续工作
 
-首先完成编译和测试修正；然后进行 scikit-rf 独立交叉核验、文件输入 CLI 和调用同一 MoonBit 核心的浏览器曲线页。
-完整规范兼容性表、真实测量文件兼容性、赛事方选题审核及报名仍未完成。
+核心库编译和现有单元测试已完成验证。后续工作是 scikit-rf 独立交叉核验、文件输入 CLI 和调用同一 MoonBit 核心的浏览器曲线页。
+格式化检查、发布包校验、完整规范兼容性表、真实测量文件兼容性、赛事方选题审核及报名仍未完成。
 
 ## 独立性与来源
 
