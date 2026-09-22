@@ -2,4 +2,5 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/core/math",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }

@@ -1,0 +1,36 @@
+name: Build SParamKit Tool
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install MoonBit
+        run: |
+          set -euo pipefail
+          curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Build real MoonBit bridge
+        run: |
+          set -euo pipefail
+          moon build bridge --target js --release --deny-warn
+          mkdir -p dist
+          find _build -name 'bridge.js' -print
+          cp _build/js/release/build/bridge/bridge.js dist/core.cjs
+          node -e 'require("./dist/core.cjs"); const r=JSON.parse(SParamKit.analyze("# Hz S RI R 50\n1 0.3 -0.4",1)); if(!r.ok || r.samples[0].values[0].magnitude !== 0.5) process.exit(1); console.log("Bridge smoke passed");'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sparamkit-tool
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30

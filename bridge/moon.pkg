@@ -1,0 +1,10 @@
+import {
+  "ttxiangshang/sparamkit" @sparam,
+}
+
+supported_targets = "js"
+
+options(
+  "is-main": true,
+  link: { "js": { "format": "iife" } },
+)
