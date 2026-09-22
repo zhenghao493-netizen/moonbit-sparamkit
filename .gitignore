@@ -5,3 +5,12 @@ target/
 __pycache__/
 verification/*.log
 verification/summary.tsv
+
+dist/
+verification/corpus/
+verification/*.png
+verification/crosscheck.json
+verification/browser-tests.json
+verification/measured-files.json
+verification/package-check.json
+verification/host-tests.json

@@ -5,6 +5,11 @@ fn tokenize_line(line : String, line_number : Int) -> Result[Array[Token], Diagn
   let mut start_column = 1
   let mut column = 0
   for ch in line.iter() {
+    // Accept a BOM only at the very beginning; source columns still count it.
+    if line_number == 1 && column == 0 && ch == '\uFEFF' {
+      column = column + 1
+      continue
+    }
     column = column + 1
     if ch == '!' { break }
     if ch == ' ' || ch == '\t' || ch == '\r' {

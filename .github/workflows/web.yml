@@ -41,6 +41,14 @@ jobs:
         run: |
           set -euo pipefail
           python tools/crosscheck.py | tee verification/crosscheck.log
+      - name: Check provenance-locked public measurement examples
+        run: |
+          set -euo pipefail
+          python tools/test_measured.py | tee verification/measured.log
+      - name: Check file CLI and stale build protection
+        run: |
+          set -euo pipefail
+          python tools/test_host.py | tee verification/host.log
       - name: Exercise offline UI and exports in Chromium
         run: |
           set -euo pipefail

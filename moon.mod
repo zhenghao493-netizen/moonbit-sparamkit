@@ -1,5 +1,5 @@
 name = "ttxiangshang/sparamkit"
-version = "0.1.0-dev.2"
+version = "0.1.0-dev.3"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/zhenghao493-netizen/moonbit-sparamkit"

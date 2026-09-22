@@ -60,7 +60,9 @@ pub fn parse_touchstone(text : String, ports : Int, max_samples? : Int = 100000)
   let mut options : Options? = None
   let mut line_number = 0
   let record_width = 1 + 2 * ports * ports
-  for line_view in text.split("\n") {
+  // Preserve physical line numbers across LF, CRLF and legacy CR input.
+  let normalized = text.replace_all(old="\r\n", new="\n").replace_all(old="\r", new="\n")
+  for line_view in normalized.split("\n") {
     line_number = line_number + 1
     let tokens = match tokenize_line(line_view.to_owned(), line_number) {
       Ok(value) => value
