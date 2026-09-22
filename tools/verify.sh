@@ -28,10 +28,10 @@ run_check() {
 printf 'UTC %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee verification/environment.log
 run_check version moon version --all
 for target in "${targets[@]}"; do
-  run_check "check-$target" moon check --target "$target"
-  run_check "build-$target" moon build --target "$target"
-  run_check "test-$target" moon test --target "$target"
-  run_check "demo-$target" moon run cmd/main --target "$target"
+  run_check "check-$target" moon check --target "$target" --deny-warn
+  run_check "build-$target" moon build --target "$target" --deny-warn
+  run_check "test-$target" moon test --target "$target" --deny-warn
+  run_check "demo-$target" moon run cmd/main --target "$target" --deny-warn
 done
 if [[ "$failed" -ne 0 ]]; then
   printf '%s\n' 'FAILED: at least one check failed. Inspect verification/summary.tsv.'
