@@ -2,6 +2,8 @@
 """Package compiled MoonBit bridge with a network-free UI; never reimplement parser."""
 from pathlib import Path
 import hashlib
+import html
+import tomllib
 import json
 import math
 import os
@@ -47,28 +49,38 @@ def main():
     shutil.copyfile(compiled,DIST/'core.cjs')
     if 'SParamKit' not in core:
         raise RuntimeError('Missing compiled bridge; run moon build bridge --target js --release --deny-warn')
+    version = tomllib.loads((ROOT/'moon.mod').read_text(encoding='utf-8'))['version']
     demo = examples()
     demo_dir = DIST/'samples'; demo_dir.mkdir(exist_ok=True)
     for key in ('two','one'):
-        (demo_dir/demo[key]['name']).write_text(demo[key]['text'])
+        (demo_dir/demo[key]['name']).write_text(demo[key]['text'],encoding='utf-8',newline='\n')
     if (ROOT/'samples').exists():
         for file in (ROOT/'samples').glob('*.s?p'):
             shutil.copyfile(file,demo_dir/file.name)
-    template = (ROOT/'web/index.html').read_text()
+    template = (ROOT/'web/index.html').read_text(encoding='utf-8')
     replacements = {
-        '/*__STYLE__*/': (ROOT/'web/style.css').read_text(),
+        '/*__STYLE__*/': (ROOT/'web/style.css').read_text(encoding='utf-8'),
         '/*__CORE__*/': core.replace('</script', '<\\/script'),
         '/*__DEMOS__*/': json.dumps(demo,ensure_ascii=False).replace('<','\\u003c'),
-        '/*__APP__*/': (ROOT/'web/app.js').read_text(),
+        '/*__APP__*/': (ROOT/'web/app.js').read_text(encoding='utf-8'),
+        '__VERSION__': html.escape(version),
         '__BUILD__': os.getenv('GITHUB_SHA','local')[:12],
     }
     for marker, content in replacements.items():
         assert template.count(marker)==1, marker
         template=template.replace(marker,content)
-    (DIST/'index.html').write_text(template)
+    (DIST/'index.html').write_text(template,encoding='utf-8',newline='\n')
     shutil.copyfile(ROOT/'tools/cli.cjs',DIST/'cli.cjs')
     if (ROOT/'LICENSE').exists(): shutil.copyfile(ROOT/'LICENSE',DIST/'LICENSE')
-    (DIST/'READ_ME.txt').write_text('SParamKit development preview\n\nOpen index.html in a modern browser (Chrome/Edge recommended).\nThe single HTML file works offline; it does not send data over the network.\nBuilt-in examples are synthetic, not instrument measurements.\n\nCLI: node cli.cjs samples/synthetic_notch.s2p --format json\nCSV: node cli.cjs samples/synthetic_notch.s2p --format csv\n\nStrict Touchstone 1.x S-parameter subset, 1/2 ports, positive real reference impedance.\nLimits: UTF-8 input file <=2 MiB, <=20000 frequency samples.\nThis is not an instrument calibration or full standards-conformance tool.\n\nCore SHA256: '+hashlib.sha256(core.encode()).hexdigest()+'\n')
+    (DIST/'READ_ME.txt').write_text('SParamKit development preview\n\nOpen index.html in a modern browser (Chrome/Edge recommended).\nThe single HTML file works offline; it does not send data over the network.\nBuilt-in examples are synthetic, not instrument measurements.\n\nCLI: node cli.cjs samples/synthetic_notch.s2p --format json\nCSV: node cli.cjs samples/synthetic_notch.s2p --format csv\n\nStrict Touchstone 1.x S-parameter subset, 1/2 ports, positive real reference impedance.\nLimits: UTF-8 input file <=2 MiB, <=20000 frequency samples.\nThis is not an instrument calibration or full standards-conformance tool.\n\nCore SHA256: '+hashlib.sha256(core.encode()).hexdigest()+'\n',encoding='utf-8',newline='\n')
+    shutil.copyfile(ROOT/'tools/verify_download.py',DIST/'verify_download.py')
+    manifest = {
+        'schema_version':1, 'project':'SParamKit', 'version':version,
+        'source_commit':os.getenv('GITHUB_SHA','local-uncommitted'),
+        'sha256':{p.relative_to(DIST).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+                  for p in sorted(DIST.rglob('*')) if p.is_file() and p.name != 'manifest.json'},
+    }
+    (DIST/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
     print('Built offline HTML, compiled MoonBit core, CLI and synthetic examples.')
     print('Core SHA256:',hashlib.sha256(core.encode()).hexdigest())
 

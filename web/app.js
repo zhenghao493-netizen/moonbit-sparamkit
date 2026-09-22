@@ -58,6 +58,8 @@
   }
   function invalidate() {
     generation++; report = null; accepted = null; page = 0;
+    $('analyze').disabled = false;
+    $('plot-note').textContent = '图中展示原始采样点，不进行插值或平滑。';
     $('csv').disabled = $('json').disabled = true;
     $('prev').disabled = $('next').disabled = true;
     $('count').textContent = $('range').textContent = $('impedance').textContent = '—';
@@ -173,7 +175,7 @@
       status('解析完成', `${sourceName} · ${data.ports} 端口 · ${data.sample_count} 个频点 · ${Math.round(performance.now()-start)} ms（含通信）`);
       render();
     } catch(error) { if(ticket===generation) status('计算失败',error.message,'error'); }
-    finally { $('analyze').disabled=false; }
+    finally { if(ticket===generation) $('analyze').disabled=false; }
   }
   async function loadFile(file) {
     if (!file) return;
@@ -201,7 +203,11 @@
   $('analyze').onclick=analyze;
   $('source').oninput=()=>{sourceName='已编辑文本'; $('input-note').textContent='文本已编辑 · 等待重新解析'; dirty();};
   $('ports').onchange=dirty;
-  $('file').onchange=event=>loadFile(event.target.files[0]);
+  $('file').onchange=event=>{
+    const file=event.target.files[0];
+    // Clear the chooser so reselecting the same file triggers a fresh import.
+    event.target.value=''; loadFile(file);
+  };
   $('drop').ondragover=event=>{event.preventDefault(); $('drop').classList.add('drag');};
   $('drop').ondragleave=()=>$('drop').classList.remove('drag');
   $('drop').ondrop=event=>{event.preventDefault(); $('drop').classList.remove('drag'); loadFile(event.dataTransfer.files[0]);};
@@ -211,9 +217,11 @@
   $('json').onclick=()=>{if(report) download(JSON.stringify(report,null,2),'json','application/json;charset=utf-8');};
   $('csv').onclick=async()=>{
     if(!accepted) return; const ticket=generation;
+    $('csv').disabled=true;
     try { const data=await request('csv',accepted.text,accepted.ports); if(ticket!==generation)return;
       if(data.ok) download(data.csv,'csv','text/csv;charset=utf-8'); else status('导出失败',data.error.message,'error');
     } catch(error) { if(ticket===generation)status('导出失败',error.message,'error'); }
+    finally { if(ticket===generation && accepted) $('csv').disabled=false; }
   };
   let resizeFrame;
   window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(render);});
