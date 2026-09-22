@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SParamKit · 射频数据工作台</title>
+<style>/*__STYLE__*/</style>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#"><span class="mark">S</span><span>SParamKit<small>射频数据工作台</small></span></a><div class="topmeta"><span class="local-dot"></span>本地计算 · 无需登录<span class="preview">开发预览</span></div></header>
+<main>
+<section class="intro"><div><p class="eyebrow">MOONBIT / TOUCHSTONE</p><h1>从一份数据，看清频率响应。</h1><p class="sub">导入 S 参数文件，检查数据、查看曲线并导出结果。所有解析与数值转换由 MoonBit 核心完成。</p></div><span class="version">工作流 01 <b>数据分析</b></span></section>
+<div class="workspace">
+<aside>
+<section class="card input-card"><div class="section-head"><span class="step">01</span><h2>输入数据</h2></div>
+<label class="drop" id="drop"><input type="file" id="file" accept=".s1p,.s2p,.txt"><span class="upload-icon">↑</span><strong>选择或拖入文件</strong><span>.s1p / .s2p · 最大 2 MiB</span></label>
+<div class="field"><label for="ports">端口数量</label><select id="ports"><option value="2">双端口 · S11 / S21 / S12 / S22</option><option value="1">单端口 · S11</option></select></div>
+<div class="field"><label for="source">Touchstone 文本 <span>可粘贴编辑</span></label><textarea id="source" spellcheck="false" maxlength="2097152" aria-label="Touchstone 文本"></textarea></div>
+<button class="primary" id="analyze">解析并查看曲线 <span>→</span></button>
+<p class="input-note" id="input-note">尚未导入文件</p>
+<div class="divider"></div><p class="mini-title">没有测量文件？试试合成样例</p><div class="examples"><button id="demo-two">二端口陷波网络</button><button id="demo-one">单端口 RC 负载</button><button id="demo-error">错误诊断样例</button></div>
+<p class="fineprint">内置数据来自解析电路模型，仅用于演示，不是真实仪器测量。</p></section>
+<section class="card scope"><h3>这一版的边界</h3><p>Touchstone 1.x 严格子集；1 / 2 端口 S 参数，单一正实数参考阻抗，RI / MA / DB，Hz 至 GHz。</p><p>不支持版本 2、多端口、噪声数据或 Y / Z 参数。频率须非负且严格递增。最多 20,000 个频点。</p></section>
+</aside>
+<div class="results">
+<section class="status" id="status" role="status" aria-live="polite"><span class="status-symbol">·</span><div><strong id="status-title">准备解析</strong><p id="status-detail">正在载入 MoonBit 核心。</p></div><span id="status-tag">LOCAL</span></section>
+<div class="metrics"><section class="card metric"><span>数据点</span><strong id="count">—</strong><small>频率采样点</small></section><section class="card metric"><span>频率范围</span><strong id="range">—</strong><small id="unit-note">已统一为 Hz</small></section><section class="card metric"><span>参考阻抗</span><strong id="impedance">—</strong><small id="format-note">输入表示</small></section></div>
+<section class="card chart-card"><div class="section-head"><span class="step">02</span><h2>频率响应</h2><div class="chart-controls"><label for="parameter" class="sr">S 参数</label><select id="parameter"><option>S21</option><option>S11</option><option>S12</option><option>S22</option></select><label for="scale" class="sr">频率轴</label><select id="scale"><option value="linear">线性频率轴</option><option value="log">对数频率轴</option></select></div></div><div class="plot-title"><strong>幅度 <span>dB</span></strong><span id="amp-caption">20 log₁₀ |S|</span></div><svg id="magnitude" class="plot" viewBox="0 0 900 255" role="img" aria-label="S 参数幅度曲线"></svg><div class="plot-title"><strong>相位 <span>°</span></strong><span>主值相位 · 不跨越 ±180° 连线</span></div><svg id="phase" class="plot" viewBox="0 0 900 220" role="img" aria-label="S 参数相位曲线"></svg><p id="plot-note" class="plot-note">图中展示原始采样点，不进行插值或平滑。</p></section>
+<section class="card table-card"><div class="section-head"><span class="step">03</span><h2>查看与导出</h2><div class="export-buttons"><button id="csv" disabled>导出 CSV ↓</button><button id="json" disabled>导出 JSON ↓</button></div></div><div class="table-wrap"><table><thead><tr><th>频率 / Hz</th><th>实部</th><th>虚部</th><th>幅度 / dB</th><th>相位 / °</th></tr></thead><tbody id="rows"></tbody></table></div><div class="pagination"><span id="table-note">等待数据</span><div><button id="prev" disabled aria-label="上一页">←</button><button id="next" disabled aria-label="下一页">→</button></div></div></section>
+</div></div>
+<footer><span>SParamKit · MoonBit 原生计算核心</span><span>数据不离开浏览器；不接入遥测、外部字体或在线服务。</span><small>构建：__BUILD__</small></footer>
+</main>
+<script type="text/plain" id="moonbit-core">/*__CORE__*/</script>
+<script type="application/json" id="demo-data">/*__DEMOS__*/</script>
+<script>/*__APP__*/</script>
+</body></html>

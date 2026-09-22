@@ -14,23 +14,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install MoonBit
         run: |
           set -euo pipefail
           curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
           bash /tmp/moon-install.sh
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Build real MoonBit bridge
+      - name: Build real MoonBit bridge and offline tool
         run: |
           set -euo pipefail
-          moon build bridge --target js --release --deny-warn
-          mkdir -p dist
-          find _build -name 'bridge.js' -print
-          cp _build/js/release/build/bridge/bridge.js dist/core.cjs
-          node -e 'require("./dist/core.cjs"); const r=JSON.parse(SParamKit.analyze("# Hz S RI R 50\n1 0.3 -0.4",1)); if(!r.ok || r.samples[0].values[0].magnitude !== 0.5) process.exit(1); console.log("Bridge smoke passed");'
-      - uses: actions/upload-artifact@v4
+          mkdir -p verification
+          moon version --all | tee verification/web-toolchain.log
+          moon build bridge --target js --release --deny-warn 2>&1 | tee verification/web-build.log
+          python tools/build_web.py
+          node --check web/app.js
+          node --check tools/cli.cjs
+          node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json > verification/cli-demo.json
+      - name: Install independent verification tools
+        run: |
+          python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Cross-check numerical results against scikit-rf
+        run: |
+          set -euo pipefail
+          python tools/crosscheck.py | tee verification/crosscheck.log
+      - name: Exercise offline UI and exports in Chromium
+        run: |
+          set -euo pipefail
+          python tools/test_browser.py | tee verification/browser.log
+      - name: Upload runnable offline tool
+        uses: actions/upload-artifact@v4
         with:
           name: sparamkit-tool
           path: dist/
           if-no-files-found: error
+          retention-days: 30
+      - name: Retain test results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sparamkit-tool-verification
+          path: verification/
           retention-days: 30
