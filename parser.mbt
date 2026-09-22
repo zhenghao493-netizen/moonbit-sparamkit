@@ -135,6 +135,11 @@ pub fn parse_touchstone(
     .replace_all(old="\r", new="\n")
   for line_view in normalized.split("\n") {
     line_number = line_number + 1
+    match
+      check_impedance_comment(line_view.to_owned(), line_number, ports, options) {
+      Ok(_) => ()
+      Err(error) => return Err(error)
+    }
     let tokens = match tokenize_line(line_view.to_owned(), line_number) {
       Ok(value) => value
       Err(error) => return Err(error)

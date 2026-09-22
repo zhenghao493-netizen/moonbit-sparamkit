@@ -32,6 +32,7 @@ pub(all) enum ErrorCode {
   InvalidOption
   UnsupportedParameter
   UnsupportedVersion
+  UnsupportedMetadata
   InvalidNumber
   NumericRange
   InvalidReference
