@@ -1,6 +1,6 @@
 name = "ttxiangshang/sparamkit"
 
-version = "0.1.0-dev.4"
+version = "0.1.0-dev.5"
 
 readme = "README.md"
 
