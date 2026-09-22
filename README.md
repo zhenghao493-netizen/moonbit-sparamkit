@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-dev.6` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-dev.7` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
 
 ## 功能
 
@@ -46,18 +46,20 @@ python tools/build_web.py
 # 读取双端口文件，输出 JSON
 node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json
 
-# 导出 CSV
-node dist/cli.cjs dist/samples/synthetic_notch.s2p --format csv > result.csv
+# 导出 CSV 到新文件
+node dist/cli.cjs dist/samples/synthetic_notch.s2p --format csv -o result.csv
 
 # 非标准后缀的文件可手动指定端口数
 node dist/cli.cjs input.txt --ports 1 --format json
 ```
 
-CLI 根据 `.s1p` / `.s2p` 后缀识别端口数。退出码为 `0`（成功）、`1`（数据检查失败）、`2`（文件或命令参数错误）。
+CLI 根据 `.s1p` / `.s2p` 后缀识别端口数，也可用 `- --ports 1` 从标准输入读取。`-o` 将结果写入新的 UTF-8 文件，已有文件不会被覆盖。更多示例见 [命令行指南](docs/CLI.md)。
+
+退出码为 `0`（成功）、`1`（数据检查失败）、`2`（文件或命令参数错误）。
 
 ### MoonBit API
 
-在本地工作区的入口包中使用核心库，`moon.pkg` 配置如下：
+在本地工作区的入口包中使用核心库，`moon.pkg` 配置如下。独立项目还需要配置模块依赖和 `moon.work`，完整步骤见 [库接入指南](docs/LIBRARY.md)：
 
 ```moonbit
 import {
@@ -109,6 +111,9 @@ python tools/test_host.py
 
 # 检查源码包并在新目录中重新构建
 python tools/check_package.py
+
+# 在独立 MoonBit 项目中验证公开 API
+python tools/test_consumer.py
 ```
 
 Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node 命令相同。
