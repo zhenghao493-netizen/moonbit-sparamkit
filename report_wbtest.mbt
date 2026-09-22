@@ -37,7 +37,9 @@ test "zero phase and dB produce valid JSON null" {
 test "report preserves parser failure and line location" {
   let text = analyze_touchstone_json("# Hz S RI R 50\n1 bad 0", 1)
   @debug.assert_eq(report_field(text, "ok"), @json.to_json(false))
-  guard report_field(text, "error") is Object(fields) else { fail("Missing error") }
+  guard report_field(text, "error") is Object(fields) else {
+    fail("Missing error")
+  }
   @debug.assert_eq(fields.get("line"), Some(@json.to_json(2)))
   @debug.assert_eq(fields.get("code"), Some(@json.to_json("InvalidNumber")))
 }
@@ -52,12 +54,18 @@ test "report validates ports" {
 test "CSV report uses core CSV encoder" {
   let source = "# Hz S RI R 50\n1 0.5 0"
   let expected = parse_touchstone(source, 1).unwrap().to_csv()
-  @debug.assert_eq(report_field(export_touchstone_csv_json(source, 1), "csv"), @json.to_json(expected))
+  @debug.assert_eq(
+    report_field(export_touchstone_csv_json(source, 1), "csv"),
+    @json.to_json(expected),
+  )
 }
 
 ///|
 test "CSV report rejects malformed input" {
-  @debug.assert_eq(report_field(export_touchstone_csv_json("# Hz S RI\n1 0", 1), "ok"), @json.to_json(false))
+  @debug.assert_eq(
+    report_field(export_touchstone_csv_json("# Hz S RI\n1 0", 1), "ok"),
+    @json.to_json(false),
+  )
 }
 
 ///|

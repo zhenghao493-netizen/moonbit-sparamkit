@@ -22,7 +22,9 @@ test "single initial BOM accepted" {
 
 ///|
 test "BOM before first comment with CRLF accepted" {
-  let net = parse_touchstone("\uFEFF! exported file\r\n# Hz S RI R 50\r\n1 0 1", 1).unwrap()
+  let net = parse_touchstone(
+    "\uFEFF! exported file\r\n# Hz S RI R 50\r\n1 0 1", 1,
+  ).unwrap()
   assert_near(net.get_s(0, 1, 1).unwrap().im, 1.0)
 }
 
@@ -54,7 +56,9 @@ test "all option category permutations give same network" {
     for b = 0; b < 4; b = b + 1 {
       for c = 0; c < 4; c = c + 1 {
         for d = 0; d < 4; d = d + 1 {
-          if a == b || a == c || a == d || b == c || b == d || c == d { continue }
+          if a == b || a == c || a == d || b == c || b == d || c == d {
+            continue
+          }
           let text = "# \{options[a]} \{options[b]} \{options[c]} \{options[d]}\n1 .3 -.4"
           let net = parse_touchstone(text, 1).unwrap()
           assert_near(net.reference_ohms, 75.0)
@@ -72,7 +76,9 @@ test "every two-port continuation split preserves wire order" {
   for split = 1; split < fields.length(); split = split + 1 {
     let mut text = "# Hz S RI R 50\n"
     for i = 0; i < fields.length(); i = i + 1 {
-      text = text + (if i == split { "\n! continuation\n" } else { " " }) + fields[i]
+      text = text +
+        (if i == split { "\n! continuation\n" } else { " " }) +
+        fields[i]
     }
     let net = parse_touchstone(text, 2).unwrap()
     assert_near(net.get_s(0, 2, 1).unwrap().im, 0.22)

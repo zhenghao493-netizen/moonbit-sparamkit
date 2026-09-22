@@ -1,4 +1,5 @@
-///| Host glue only. The two callbacks run the MoonBit parser and report encoder.
+///|
+/// Host glue only. The two callbacks run the MoonBit parser and report encoder.
 extern "js" fn install(
   analyze : (String, Int) -> String,
   csv : (String, Int) -> String,
