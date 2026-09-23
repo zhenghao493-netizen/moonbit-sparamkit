@@ -1,6 +1,6 @@
 # Touchstone compatibility matrix
 
-Scope: `0.1.0-dev.4`, one/two-port single-ended S parameters. This is an implementation contract, **not full Touchstone conformance**.
+Scope: `0.1.0-dev.8`, one/two-port single-ended S parameters. This is an implementation contract, **not full Touchstone conformance**.
 
 Reference: [IBIS Touchstone 2.0 specification](https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf), specifically its explicit **Version 1.0** rules: general syntax (printed p.4), option line (pp.6–7), network records/order (pp.12–14), noise data (pp.23–25). Using those legacy clauses does not imply support for version-2 keywords. The source implementation and tests decide current behaviour; differences below are intentional and visible.
 
@@ -8,7 +8,7 @@ Reference: [IBIS Touchstone 2.0 specification](https://ibis.org/touchstone_ver2.
 | --- | --- | --- |
 | One/two ports | Caller supplies 1 or 2; other counts rejected | `core_wbtest.mbt`: port count, wire order |
 | S11/S21/S12/S22 order | Uses legacy column order, not row-major | Asymmetric values in unit and independent tests |
-| Frequency units | Hz, kHz, MHz, GHz; normalize to Hz | Unit tests and 72 generated combinations |
+| Frequency units | Hz, kHz, MHz, GHz; normalize to Hz | Unit and independent numerical tests |
 | Representations | RI, MA, DB; angles in degrees; DB uses divisor 20 | Unit and independent numerical tests |
 | Option defaults | Single `#` means GHz/S/MA/50 ohms | Option-default test |
 | Option case/order | Case-insensitive; categories may be reordered, R keeps its value | All 24 category permutations tested |
@@ -23,6 +23,7 @@ Reference: [IBIS Touchstone 2.0 specification](https://ibis.org/touchstone_ver2.
 | Non-ASCII content | UTF-8 comment text permitted; numeric fields remain ASCII decimal | **Encoding extension**; not a validator of the standard's ASCII-only restriction |
 | Frequencies | Nonnegative and strictly increasing; no automatic sort/deduplication | Negative/duplicate/order tests; explicit implementation restriction |
 | Precision | IEEE binary64; overflow and nonzero-decimal underflow to zero rejected | **Implementation limit**, not arbitrary precision |
+| Derived dB | Scaled log-domain calculation from finite components; independent of linear magnitude overflow or subnormal rounding | `numeric_wbtest.mbt`, [numeric conventions](NUMERICS.md) |
 | Zero magnitude | Finite dB and phase unavailable; JSON `null` | Unit and browser tests |
 | 2.0 keywords/mixed mode | Bracketed keyword sections rejected | `UnsupportedVersion`; no 2.0 conformance claim |
 | More ports, Y/Z/H/G | Rejected | `UnsupportedPorts` / `UnsupportedParameter` |

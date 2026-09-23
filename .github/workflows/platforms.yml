@@ -85,6 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           python tools/test_browser.py | tee verification/platform-browser.log
+          python tools/test_numeric_browser.py | tee verification/numeric-browser.log
       - name: Retain platform evidence
         if: always()
         uses: actions/upload-artifact@v4

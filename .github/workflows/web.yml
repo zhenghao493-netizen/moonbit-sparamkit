@@ -33,6 +33,10 @@ jobs:
           node --check web/app.js
           node --check tools/cli.cjs
           node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json > verification/cli-demo.json
+      - name: Check numerical boundaries against Decimal
+        run: |
+          set -euo pipefail
+          python tools/test_numeric.py | tee verification/numeric.log
       - name: Install independent verification tools
         run: |
           python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
@@ -53,6 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           python tools/test_browser.py | tee verification/browser.log
+          python tools/test_numeric_browser.py | tee verification/numeric-browser.log
       - name: Upload runnable offline tool
         uses: actions/upload-artifact@v4
         with:
