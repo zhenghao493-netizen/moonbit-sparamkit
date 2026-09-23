@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0 — 2026-09-23
+
+- Freeze the reviewed one/two-port Touchstone implementation for the competition delivery.
+- Align package, README, compatibility and consumer-example versions.
+- Add a five-minute demonstration script and technical walkthrough.
+- Publish a tagged GitHub release containing the fully checked submission bundle, standalone workbench and SHA256 checksums.
+- Retain the RC3 runtime, public API and 104 core tests unchanged.
+
 ## 0.1.0-rc.3
 
 - Add an offline review homepage to the submission bundle, linking the workbench, demonstration route and current reports.

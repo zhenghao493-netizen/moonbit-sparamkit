@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-rc.3` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md) · [架构设计](docs/ARCHITECTURE.md)
+版本：`0.1.0` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md) · [架构设计](docs/ARCHITECTURE.md)
 
 ## 功能
 
@@ -21,10 +21,12 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 ## 快速体验
 
-评审和完整试用可在 [验收包构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/submission.yml) 下载成功运行的 `sparamkit-submission` 附件。解压其中的提交包，打开根目录 `index.html`，由评审首页进入工作台；源码、演示说明和本次测试报告也包含在同一个包中。
+从 [v0.1.0 下载页](https://github.com/zhenghao493-netizen/moonbit-sparamkit/releases/tag/v0.1.0) 获取：
 
-在 [工具构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml) 选择一次成功运行，从 **Artifacts** 下载 `sparamkit-tool`。解压后，用桌面浏览器打开 `index.html`。
+- `SParamKit-0.1.0.html`：单文件离线工作台，保存后用桌面浏览器打开。
+- `SParamKit-0.1.0-submission.zip`：完整交付包，包含工作台、源码、文档和测试报告。解压后打开根目录 `index.html`。
 
+演示顺序和核心设计讲解见 [演示讲稿](docs/DEMO.md)。
 工作台不需要安装 MoonBit、启动服务器或联网。首次打开会载入双端口陷波样例，也可以切换到单端口 RC 负载，或直接导入自己的文件。内置样例为合成电路数据。
 
 选择 S11 / S21 / S12 / S22 查看曲线，按需切换线性或对数频率轴，再点击 CSV 或 JSON 导出。编辑输入后重新解析即可。逐点查看和错误定位的操作见 [曲线读数指南](docs/WORKBENCH.md)。

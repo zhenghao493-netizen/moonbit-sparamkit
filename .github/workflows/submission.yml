@@ -10,8 +10,13 @@ jobs:
   submission:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      version: ${{ steps.assets.outputs.version }}
+      stable: ${{ steps.assets.outputs.stable }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -28,11 +33,21 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Test and assemble one versioned submission
         run: python tools/prepare_submission.py
+      - name: Verify and select release downloads
+        id: assets
+        run: python tools/prepare_release_assets.py
       - name: Upload verified submission bundle
         uses: actions/upload-artifact@v4
         with:
           name: sparamkit-submission
           path: _build/submission/*-submission.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Retain release downloads
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-downloads
+          path: _build/release/
           if-no-files-found: error
           retention-days: 90
       - name: Keep acceptance status and failing command log
@@ -44,3 +59,45 @@ jobs:
             _build/submission/submission-check.json
             _build/submission/failed-step.log
           retention-days: 90
+  publish:
+    name: Publish tagged release
+    needs: submission
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.submission.outputs.stable == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: release-${{ needs.submission.outputs.version }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-downloads
+          path: release-downloads
+      - name: Create versioned release without replacing existing assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.submission.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          cd release-downloads
+          sha256sum --check SHA256SUMS.txt
+          TAG="v$VERSION"
+          if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving its tag and assets unchanged."
+            exit 0
+          fi
+          # Never attach this build to an unrelated pre-existing tag.
+          if gh api "repos/$GH_REPO/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists without a release; review it before publishing." >&2
+            exit 1
+          fi
+          gh release create "$TAG" \
+            "SParamKit-$VERSION-submission.zip" \
+            "SParamKit-$VERSION.html" SHA256SUMS.txt \
+            --repo "$GH_REPO" --target "$GITHUB_SHA" \
+            --title "SParamKit $VERSION" --notes-file RELEASE_NOTES.md
