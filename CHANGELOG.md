@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-rc.1
+
+- Assemble a single acceptance bundle with the offline workbench, rebuildable source, feature checklist, current reports and screenshots.
+- Add `tools/prepare_submission.py` to run the complete acceptance suite and verify the delivered ZIP.
+- Limit runtime packaging to named project assets. Reject unrelated files, directories and symlinks without deleting local results.
+- Add ten packaging regression scenarios and run them again after source-package extraction.
+- Preserve ignore rules in the source archive and verify that a tested extraction repackages to the same file set and bytes.
+- Keep the MoonBit core API, numerical implementation and 104 existing tests unchanged.
+
 ## 0.1.0-dev.9
 
 - Calculate dB in log space to avoid intermediate magnitude overflow and subnormal rounding loss.

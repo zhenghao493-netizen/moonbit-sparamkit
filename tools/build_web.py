@@ -8,6 +8,7 @@ import json
 import math
 import os
 import shutil
+import stat
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
@@ -40,22 +41,56 @@ def examples():
         'error': {'name': 'invalid_example.s2p', 'ports': 2, 'text': '# GHz S RI R 50\n1 0.1 0 0.8 0\n'},
     }
 
+
+def check_output_directory(expected: set[str]) -> None:
+    """Refuse unrelated files before writing; never delete a user's local results."""
+    directories = {Path(name).parent.as_posix() for name in expected} - {'.'}
+    if DIST.is_symlink():
+        raise ValueError('Output directory is a symlink: dist')
+    if not DIST.exists():
+        return
+    if not DIST.is_dir():
+        raise ValueError('Output path is not a directory: dist')
+    for path in DIST.rglob('*'):
+        name = path.relative_to(DIST).as_posix()
+        mode = path.lstat().st_mode
+        if stat.S_ISLNK(mode):
+            raise ValueError('Output contains a symlink: ' + name)
+        if stat.S_ISDIR(mode) and name in directories:
+            continue
+        if stat.S_ISREG(mode) and name in expected:
+            continue
+        raise ValueError('Unexpected output entry: ' + name +
+                         '. Move local results out of dist before rebuilding; nothing was removed.')
+
 def main():
-    DIST.mkdir(exist_ok=True)
     compiled = ROOT/'_build/js/release/build/bridge/bridge.js'
     if not compiled.is_file():
         raise FileNotFoundError('Missing current compiled bridge; run moon build bridge --target js --release --deny-warn first. Refusing stale dist/core.cjs.')
+    sample_files = sorted((ROOT/'samples').glob('*.s?p'))
+    for sample in sample_files:
+        if sample.is_symlink() or not sample.is_file():
+            raise ValueError('Sample must be a regular file: ' + sample.name)
+    expected = {'core.cjs', 'cli.cjs', 'index.html', 'LICENSE', 'READ_ME.txt',
+                'verify_download.py', 'manifest.json', 'samples/synthetic_notch.s2p',
+                'samples/synthetic_rc.s1p'} | {'samples/' + p.name for p in sample_files}
+    check_output_directory(expected)
     core = compiled.read_text(encoding='utf-8')
-    shutil.copyfile(compiled,DIST/'core.cjs')
     if 'SParamKit' not in core:
         raise RuntimeError('Missing compiled bridge; run moon build bridge --target js --release --deny-warn')
     version = tomllib.loads((ROOT/'moon.mod').read_text(encoding='utf-8'))['version']
+    if not (ROOT/'LICENSE').is_file():
+        raise FileNotFoundError('LICENSE is required in the runtime package')
+    DIST.mkdir(exist_ok=True)
+    # Invalidate the old manifest first: an interrupted build cannot look verified.
+    (DIST/'manifest.json').unlink(missing_ok=True)
+    shutil.copyfile(compiled,DIST/'core.cjs')
     demo = examples()
     demo_dir = DIST/'samples'; demo_dir.mkdir(exist_ok=True)
     for key in ('two','one'):
         (demo_dir/demo[key]['name']).write_text(demo[key]['text'],encoding='utf-8',newline='\n')
     if (ROOT/'samples').exists():
-        for file in (ROOT/'samples').glob('*.s?p'):
+        for file in sample_files:
             shutil.copyfile(file,demo_dir/file.name)
     template = (ROOT/'web/index.html').read_text(encoding='utf-8')
     replacements = {
@@ -78,7 +113,7 @@ def main():
         'schema_version':1, 'project':'SParamKit', 'version':version,
         'source_commit':os.getenv('GITHUB_SHA','local-uncommitted'),
         'sha256':{p.relative_to(DIST).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
-                  for p in sorted(DIST.rglob('*')) if p.is_file() and p.name != 'manifest.json'},
+                  for p in (DIST/name for name in sorted(expected - {'manifest.json'}))},
     }
     (DIST/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
     print('Built offline HTML, compiled MoonBit core, CLI and synthetic examples.')
