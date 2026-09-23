@@ -1,0 +1,18 @@
+[
+  {"name":"array_prefix","source":"fn f(xs : Array[Int]) -> Int { match xs { [.. prefix, last] => prefix.length() + last\n [] => 0 } }\n"},
+  {"name":"array_spread","source":"fn f(xs : Array[Int]) -> Array[Int] { [1, ..xs, 2] }\n"},
+  {"name":"array_tail","source":"fn f(xs : Array[Int]) -> Int { match xs { [a, .. rest] => a + rest.length()\n [] => 0 } }\n"},
+  {"name":"block_comment_like_string","source":"fn f() -> String { \"// comment-like \\\"text\\\"\" }\n"},
+  {"name":"closure_nested","source":"fn f(xs : Array[Int]) -> Array[Int] { xs.map(x => { let y = x + 1\n y * 2 }) }\n"},
+  {"name":"empty_and_trailing","source":"enum E { A; B; }\nfn f() -> (Int, Int) { (1, 2,) }\n"},
+  {"name":"enum_docs","source":"/// Variants.\nenum E {\n /// first\n A(Int)\n /// second\n B(name~ : String)\n C\n}\n"},
+  {"name":"generic_where","source":"fn[T : Eq] f(x : T, y : T) -> Bool { x == y }\n"},
+  {"name":"labelled_call","source":"fn f(x~ : Int, y~ : Int) -> Int { x-y }\nfn g() -> Int { let x=7\n f(x~, y=3) }\n"},
+  {"name":"local_function","source":"fn f(x : Int) -> Int { fn g(y : Int) { y + 1 }\n g(x) }\n"},
+  {"name":"match_guard","source":"fn f(x : Int) -> Int { match x { y if y > 0 => y\n _ => 0 } }\n"},
+  {"name":"neg_pattern","source":"fn f(x : Int) -> Bool { match x { -1 | -2 => true\n _ => false } }\n"},
+  {"name":"optional_default","source":"fn f(x : Int, y? : Int = 2) -> Int { x + y }\n"},
+  {"name":"precedence","source":"fn f(a : Int, b : Int, c : Int) -> Int { a + b * c - (a - b) / c }\n"},
+  {"name":"struct_docs","source":"/// A point.\nstruct Point {\n /// 中文字段\n x : Int\n /// 第二个字段\n mut y : Int\n}\n"},
+  {"name":"utf8_comment","source":"// 一段注释 😀\nfn f() -> String { \"值是\\{1 + 2}\" }\n"}
+]

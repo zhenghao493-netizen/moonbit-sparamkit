@@ -1,0 +1,9 @@
+MoonBit ParserCheck
+Copyright 2026 Wei Zhenghao
+SPDX-License-Identifier: Apache-2.0
+
+New scripts and test inputs are licensed under the Apache License, Version 2.0.
+You may obtain a copy at https://www.apache.org/licenses/LICENSE-2.0 .
+The pinned moonbitlang/parser source is retrieved separately with its original
+copyright notices and Apache-2.0 LICENSE intact. No ownership of the upstream
+parser or its existing tests is claimed.

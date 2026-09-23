@@ -1,14 +1,15 @@
-name: Parser topic baseline
+name: Parser compatibility pilot
 on:
   push:
     branches: [reselect/parser-conformance]
+    paths: ['tools/**', 'fixtures/**', 'upstream.lock.json', '.github/workflows/parser-baseline.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  baseline:
+  pilot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -22,30 +23,24 @@ jobs:
           ref: a01fd77e599c12cf9a2182df3456990e74f53ced
           path: upstream
           persist-credentials: false
-      - name: Install MoonBit
+      - name: Install MoonBit and record environment
         shell: bash
         run: |
           set -euo pipefail
           curl -fsSL --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
           bash /tmp/moon-install.sh
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Execute unchanged upstream baseline
-        run: python tools/baseline.py upstream
-      - name: Retain baseline logs
+          mkdir -p reports
+          "$HOME/.moon/bin/moon" version --all > reports/toolchain.log
+      - name: Resolve pinned upstream dependencies
+        working-directory: upstream
+        run: moon update
+      - name: Compare valid syntax with both parser implementations
+        run: python tools/pilot.py upstream
+      - name: Retain actual inputs and outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: parser-baseline
+          name: parser-pilot
           path: reports/
           retention-days: 14
-      - name: Package pinned sources and resolved dependencies for local tests
-        if: always()
-        shell: bash
-        run: |
-          tar --exclude='.git' --exclude='_build' --exclude='target' --exclude='node_modules' -czf parser-workspace.tar.gz upstream
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: parser-workspace
-          path: parser-workspace.tar.gz
-          retention-days: 2
