@@ -1,0 +1,47 @@
+name: Verify grouped-constraint location patch
+on:
+  push:
+    branches: [reselect/parser-conformance]
+    paths: ['patches/**', 'regressions/**', 'tools/verify_grouped_patch.py', '.github/workflows/parser-grouped.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: moonbitlang/parser
+          ref: a01fd77e599c12cf9a2182df3456990e74f53ced
+          path: upstream
+          persist-credentials: false
+      - name: Prepare pinned toolchain and dependencies
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          mkdir -p reports
+          "$HOME/.moon/bin/moon" version --all | tee reports/toolchain.log
+          "$HOME/.moon/bin/moonc" -v | grep 'v0.10.14+7d59c7ec9'
+          "$HOME/.moon/bin/moon" -C upstream update
+      - name: Reproduce the new failure and test both candidate patches
+        run: python tools/verify_grouped_patch.py upstream
+      - name: Retain actual before and after results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grouped-constraint-patch-evidence
+          path: reports/
+          retention-days: 30

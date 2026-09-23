@@ -1,0 +1,26 @@
+diff --git a/untyped_cst/lower.mbt b/untyped_cst/lower.mbt
+--- a/untyped_cst/lower.mbt
++++ b/untyped_cst/lower.mbt
+@@ -3631,8 +3631,21 @@
+ fn lower_tuple_pattern(node : CstNode) -> @syntax.Pattern {
+   let items = lower_pattern_items(node)
+   if node.has_child_kind(Pattern_Group) {
++    // Only the parentheses introducing the annotation belong to its location.
++    // Outer grouping parentheses must preserve the already lowered span.
++    let direct_constraint = node
++      .first_child_with_label("body")
++      .map(body => {
++        body
++        .children_with_label("item")
++        .get(0)
++        .map(item => item.kind is Pattern_Constraint)
++        .unwrap_or(false)
++      })
++      .unwrap_or(false)
+     match items.get(0).unwrap_or(Any(loc=node.loc)) {
+-      Constraint(pat~, ty~, loc=_) => Constraint(pat~, ty~, loc=node.loc)
++      Constraint(pat~, ty~, loc=_) if direct_constraint =>
++        Constraint(pat~, ty~, loc=node.loc)
+       item => item
+     }
+   } else {
