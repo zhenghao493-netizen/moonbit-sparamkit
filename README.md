@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-dev.8` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-dev.9` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
 
 ## 功能
 
@@ -100,6 +100,8 @@ fn main {
 
 暂不支持 Touchstone 2.0 关键字、多端口、噪声参数和阻抗重归一化。对识别到的 `Port Impedance` 声明会检查其与文件头是否一致；其他厂商扩展的处理方式、资源限制和绘图约定见 [兼容性说明](docs/COMPATIBILITY.md)。
 
+分贝采用缩放后的复数分量计算，避免极小幅度舍入或中间结果溢出影响读数。计算约定与精度测试见 [数值说明](docs/NUMERICS.md)。
+
 ## 开发与测试
 
 ```bash
@@ -114,11 +116,14 @@ python tools/check_package.py
 
 # 在独立 MoonBit 项目中验证公开 API
 python tools/test_consumer.py
+
+# 用高精度参考结果检查两个后端的数值边界
+python tools/test_numeric.py
 ```
 
 Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node 命令相同。
 
-核心库包含 96 个测试（含 10 个公开 API 黑盒测试），分别运行在 JS 和 wasm-gc 上。CI 还覆盖 scikit-rf 数值对照、公开文件样例、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
+核心库包含 104 个测试（含 10 个公开 API 黑盒测试），分别运行在 JS 和 wasm-gc 上。CI 还覆盖 Decimal 高精度边界对照、scikit-rf 数值对照、公开文件样例、文件读写故障、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
 
 解析、数值转换、诊断和数据导出在 MoonBit 中实现；`bridge/` 提供调用入口，`web/` 负责界面，`tools/` 包含 CLI 包装、构建和测试脚本。Python 与 scikit-rf 用于构建及测试。
 

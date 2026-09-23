@@ -148,13 +148,27 @@ pub fn Complex::magnitude(self : Complex) -> Double {
 }
 
 ///|
-/// Zero magnitude has no finite dB value. Invalid caller-created values return None.
+/// Compute dB from scaled components instead of a rounded linear magnitude.
+/// Zero and nonfinite components return None. Finite nonzero inputs retain a
+/// finite dB value even when their linear magnitude overflows binary64.
 pub fn Complex::magnitude_db(self : Complex) -> Double? {
-  let amplitude = self.magnitude()
-  if !finite(amplitude) || amplitude <= 0.0 {
+  if !finite(self.re) || !finite(self.im) {
     return None
   }
-  Some(20.0 * @math.log10(amplitude))
+  let a = self.re.abs()
+  let b = self.im.abs()
+  let high = if a >= b { a } else { b }
+  let low = if a >= b { b } else { a }
+  if high == 0.0 {
+    return None
+  }
+  let ratio = low / high
+  // |z|^2 = high^2 * (1 + ratio^2). Keep the calculation in log space;
+  // ln_1p preserves small corrections without first rounding 1 + ratio^2.
+  Some(
+    20.0 * @math.log10(high) +
+    10.0 / @math.ln(10.0) * @math.ln_1p(ratio * ratio),
+  )
 }
 
 ///|

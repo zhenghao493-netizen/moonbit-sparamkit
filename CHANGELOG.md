@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.9
+
+- Calculate dB in log space to avoid intermediate magnitude overflow and subnormal rounding loss.
+- Retain the finite dB readout when a derived linear magnitude is outside the Double range.
+- Add eight numeric regression tests and a 100-digit Decimal reference corpus on JS and wasm-gc.
+- Check JSON and CSV agreement for extreme finite values and include numeric verification in source-package reconstruction.
+
 ## 0.1.0-dev.8
 
 - Close the output handle when file metadata lookup fails before writing.

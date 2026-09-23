@@ -52,7 +52,7 @@ def main() -> int:
                         'pkg.generated.mbti', 'compatibility_wbtest.mbt', 'api_test.mbt',
                         'docs/COMPATIBILITY.md', 'docs/TEST_DATA.md',
                         'tools/build_web.py', 'tools/cli.cjs', 'tools/test_cli.py',
-                        'tools/test_consumer.py', 'tools/test_file_faults.py', 'web/index.html'}
+                        'tools/test_consumer.py', 'tools/test_file_faults.py', 'tools/test_numeric.py', 'numeric_wbtest.mbt', 'tools/test_numeric_browser.py', 'web/index.html'}
             if not required.issubset(names):
                 raise RuntimeError('Package missing required files: ' + str(required - set(names)))
             for info in z.infolist():
@@ -65,7 +65,7 @@ def main() -> int:
                     raise RuntimeError('Build/cache content leaked into package: ' + info.filename)
                 if any(x.startswith('.env') or x.endswith(('.pem', '.key')) for x in p.parts):
                     raise RuntimeError('Potential credential path in package: ' + info.filename)
-                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json', 'cli-tests.json', 'consumer-tests.json', 'file-fault-tests.json'}:
+                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json', 'cli-tests.json', 'consumer-tests.json', 'numeric-tests.json', 'numeric-browser-tests.json', 'file-fault-tests.json'}:
                     raise RuntimeError('Generated verification output leaked into source package')
             if z.read('LICENSE') != (ROOT / 'LICENSE').read_bytes():
                 raise RuntimeError('LICENSE differs in package')
@@ -82,9 +82,11 @@ def main() -> int:
                 if not example.get('ok') or example.get('sample_count') != 291:
                     raise RuntimeError('Packaged CLI produced unexpected sample output')
                 run([sys.executable, 'tools/test_cli.py'], directory)
-                run([sys.executable, 'tools/test_consumer.py'], directory)
                 run([sys.executable, 'tools/test_file_faults.py'], directory)
                 REPORT['file_faults'] = json.loads((directory / 'verification/file-fault-tests.json').read_text(encoding='utf-8'))
+                run([sys.executable, 'tools/test_consumer.py'], directory)
+                run([sys.executable, 'tools/test_numeric.py'], directory)
+                REPORT['numeric'] = json.loads((directory / 'verification/numeric-tests.json').read_text(encoding='utf-8'))
                 REPORT['cli'] = json.loads((directory / 'verification/cli-tests.json').read_text(encoding='utf-8'))
                 REPORT['external_consumer'] = json.loads((directory / 'verification/consumer-tests.json').read_text(encoding='utf-8'))
         REPORT.update(status='passed', archive=stem, sha256=archive_hash,
