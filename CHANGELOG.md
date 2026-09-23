@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-dev.7
+
+- Add CLI `--output` / `-o` to save JSON or CSV as UTF-8 without overwriting existing files.
+- Reject repeated options and support dash-leading filenames after `--`.
+- Bound input reads even if a file grows after its size check; clean up partial output on write failure.
+- Add 10 public-API black-box tests and CLI file-output/failure-path checks.
+- Verify direct file export again when rebuilding the source package.
+
 ## 0.1.0-dev.6
 
 - Add linked frequency readouts for magnitude and phase plots, with mouse, slider and keyboard selection.

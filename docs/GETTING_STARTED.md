@@ -57,11 +57,13 @@
 
 ```bash
 node cli.cjs samples/synthetic_notch.s2p --format json
-node cli.cjs samples/synthetic_notch.s2p --format csv > result.csv
+node cli.cjs samples/synthetic_notch.s2p --format csv --output result.csv
 node cli.cjs input.txt --ports 1 --format json
 ```
 
 成功时退出码为 `0`；数据检查失败为 `1`，并输出 JSON 诊断；文件或参数错误为 `2`，原因写入标准错误输出。
+
+`--output`（简写 `-o`）直接保存 UTF-8 文件；已有文件不会被覆盖，输入未通过检查时不会生成目标文件。省略该参数则输出到终端。更多参数见 [命令行指南](CLI.md)。
 
 ## 检查运行包
 

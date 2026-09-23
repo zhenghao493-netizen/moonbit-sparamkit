@@ -58,6 +58,99 @@ def main() -> None:
         chinese.write_text('# Hz S RI R 50\n1 错误 0\n', encoding='utf-8')
         assert '错误' in json.loads(call([chinese], 1).stdout)['error']['message']
         checks.append('Unicode/spaced paths and UTF-8 diagnostics round-trip without locale defaults')
+        # Direct output is compared with stdout byte-for-byte, before decoding.
+        exported = named/'网络 参数.json'
+        saved = call([file, '--output', exported], 0)
+        assert saved.stdout == '' and saved.stderr == ''
+        assert exported.read_bytes() == call([file], 0).stdout.encode('utf-8')
+        checks.append('direct JSON output is UTF-8 and matches stdout byte-for-byte')
+        csv_file = named/'网络 参数.csv'
+        assert call([file, '--format', 'csv', '-o', csv_file], 0).stdout == ''
+        assert csv_file.read_bytes() == csv.encode('utf-8')
+        checks.append('short output option saves complete CSV without shell redirection')
+        before = exported.read_bytes()
+        duplicate = call([file, '--output', exported], 2)
+        assert 'already exists' in duplicate.stderr and duplicate.stdout == ''
+        assert exported.read_bytes() == before
+        checks.append('existing output is refused and remains byte-identical')
+        before = file.read_bytes()
+        assert 'already exists' in call([file, '-o', file], 2).stderr
+        assert file.read_bytes() == before
+        checks.append('output cannot overwrite the original Touchstone input')
+        failed_output = td/'failed.csv'
+        for source in (bad, guarded):
+            if source == guarded:
+                source.write_text('# Hz S RI R 50\n1 .1 0\n! Port Impedance 75 0', encoding='utf-8')
+            diagnostic = json.loads(call([source, '--format', 'csv', '-o', failed_output], 1).stdout)
+            assert not diagnostic['ok'] and not failed_output.exists()
+        checks.append('parse and impedance errors do not create output files')
+        for args in ([file, '--output'], [file, '-o', ''],
+                     [file, '--output', '--format', 'csv'],
+                     [file, '--ports', '1', '--ports', '2'],
+                     [file, '--format', 'json', '--format', 'csv'],
+                     [file, '-o', td/'a.csv', '--output', td/'b.csv']):
+            assert call(args, 2).stdout == ''
+        assert not (td/'a.csv').exists() and not (td/'b.csv').exists()
+        checks.append('missing output values and duplicate options fail before writing')
+        assert call([file, '--output', td/'missing-dir/result.csv'], 2).stdout == ''
+        assert not (td/'missing-dir').exists()
+        call([file, '--output', named], 2)
+        assert named.is_dir()
+        checks.append('invalid destination directories fail without creating parents')
+        # A filename beginning with -- is accepted after the option terminator.
+        dashed = td/'--sample.s1p'; dashed.write_bytes(before)
+        proc = subprocess.run(['node', str(ROOT/'dist/cli.cjs'), '--', dashed.name],
+                              cwd=td, capture_output=True, encoding='utf-8', timeout=20)
+        assert proc.returncode == 0 and json.loads(proc.stdout)['sample_count'] == 2
+        checks.append('option terminator supports dash-leading input filenames')
+        maximum = td/'limit.s1p'
+        prefix = b'# Hz S RI R 50\n1 .1 0\n!'
+        maximum.write_bytes(prefix+b'x'*(2*1024*1024-len(prefix)))
+        assert json.loads(call([maximum], 0).stdout)['sample_count'] == 1
+        maximum.write_bytes(maximum.read_bytes()+b'x')
+        call([maximum], 2)
+        checks.append('file budget accepts exactly 2 MiB and rejects the next byte')
+
+        # Test write failure with a real created output and an injected partial write.
+        fault = td/'fault.cjs'
+        fault.write_text("""const fs = require('node:fs');
+const write = fs.writeFileSync;
+fs.writeFileSync = function(file, data, options) {
+  if (typeof file === 'number') {
+    write(file, 'partial', 'utf8');
+    const error = new Error('injected write failure'); error.code = 'ENOSPC'; throw error;
+  }
+  return write(file, data, options);
+};
+""", encoding='utf-8')
+        proc = subprocess.run(['node', '--require', str(fault), str(ROOT/'dist/cli.cjs'),
+                               str(file), '-o', str(failed_output)],
+                              capture_output=True, encoding='utf-8', timeout=20)
+        assert proc.returncode == 2 and 'injected write failure' in proc.stderr
+        assert not failed_output.exists() and file.read_bytes() == before
+        checks.append('failed write removes its partial output and preserves input')
+
+        # A real file grows immediately after fstat. Capture the capped read total.
+        growing = td/'growing.s1p'; growing.write_bytes(b'# Hz S RI R 50\n1 .1 0\n!')
+        read_record = td/'read-count.json'
+        growth = td/'growth.cjs'
+        growth.write_text("const fs=require('node:fs');\nconst filename="+json.dumps(str(growing))+";\n"
+            +"const record="+json.dumps(str(read_record))+";\n"+"""
+const open=fs.openSync, fstat=fs.fstatSync, read=fs.readSync, write=fs.writeFileSync;
+let active, total=0, capacity=0;
+fs.openSync=function(file, ...args){const fd=open(file, ...args); if(file===filename && args[0]==='r') active=fd; return fd;};
+fs.fstatSync=function(fd, ...args){const result=fstat(fd, ...args); if(fd===active) fs.appendFileSync(filename, Buffer.alloc(4*1024*1024, 120)); return result;};
+fs.readSync=function(fd, buffer, ...args){const count=read(fd, buffer, ...args); if(fd===active){total+=count;capacity=Math.max(capacity,buffer.length);} return count;};
+process.on('exit',()=>write(record,JSON.stringify({total,capacity}),'utf8'));
+""", encoding='utf-8')
+        proc = subprocess.run(['node', '--require', str(growth), str(ROOT/'dist/cli.cjs'),
+                               str(growing), '-o', str(failed_output)],
+                              capture_output=True, encoding='utf-8', timeout=20)
+        assert proc.returncode == 2 and 'grew beyond' in proc.stderr
+        record = json.loads(read_record.read_text(encoding='utf-8'))
+        assert record == {'total':2*1024*1024+1, 'capacity':2*1024*1024+1}, record
+        assert not failed_output.exists()
+        checks.append('input growth is rejected after at most limit-plus-one bytes')
         delivered = td/'delivered'; shutil.copytree(ROOT/'dist', delivered)
         def integrity(code):
             proc = subprocess.run([sys.executable, str(delivered/'verify_download.py')],

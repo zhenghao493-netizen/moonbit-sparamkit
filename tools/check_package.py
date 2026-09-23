@@ -49,7 +49,7 @@ def main() -> int:
             if len(names) != len(set(names)):
                 raise RuntimeError('Duplicate archive entry')
             required = {'moon.mod', 'moon.pkg', 'LICENSE', 'README.md', 'parser.mbt',
-                        'pkg.generated.mbti', 'compatibility_wbtest.mbt',
+                        'pkg.generated.mbti', 'compatibility_wbtest.mbt', 'api_test.mbt', 'docs/CLI.md',
                         'docs/COMPATIBILITY.md', 'docs/TEST_DATA.md',
                         'tools/build_web.py', 'tools/cli.cjs', 'web/index.html'}
             if not required.issubset(names):
@@ -80,6 +80,12 @@ def main() -> int:
                 example = json.loads(run(['node', 'dist/cli.cjs', 'dist/samples/synthetic_notch.s2p', '--format', 'json'], directory))
                 if not example.get('ok') or example.get('sample_count') != 291:
                     raise RuntimeError('Packaged CLI produced unexpected sample output')
+                output = directory / 'saved-result.json'
+                saved_stdout = run(['node', 'dist/cli.cjs', 'dist/samples/synthetic_notch.s2p',
+                                    '--output', str(output)], directory)
+                if saved_stdout or json.loads(output.read_text(encoding='utf-8')) != example:
+                    raise RuntimeError('Packaged --output differs from stdout report')
+
         REPORT.update(status='passed', archive=stem, sha256=archive_hash,
                       files=len(names), fresh_extraction_rebuilt=True,
                       publication='not attempted')
