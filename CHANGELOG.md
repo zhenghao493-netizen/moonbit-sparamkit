@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.8
+
+- Close the output handle when file metadata lookup fails before writing.
+- Add six file-I/O fault tests covering short reads, growing input, read/metadata/write errors and replacement-file preservation.
+- Run fault tests on each supported platform and again after source-package extraction.
+- Add ten black-box tests for the public MoonBit interface, bringing the in-package suite to 96 tests.
+
 ## 0.1.0-dev.7
 
 - Accept piped UTF-8 input with `- --ports 1|2`.
