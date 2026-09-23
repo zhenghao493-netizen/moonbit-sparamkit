@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-dev.7
+
+- Accept piped UTF-8 input with `- --ports 1|2`.
+- Add `--output` / `-o` for writing a new CSV or JSON file without overwriting existing files.
+- Bound file and stdin reads, reject duplicate options, and handle closed output pipes.
+- Add `--version` and literal input paths after `--`.
+- Test CLI workflows and independent MoonBit workspace consumers during source-package reconstruction.
+- Add command-line and library integration guides.
+
 ## 0.1.0-dev.6
 
 - Add linked frequency readouts for magnitude and phase plots, with mouse, slider and keyboard selection.
