@@ -1,5 +1,0 @@
-import {
-  "ttxiangshang/sparamkit" @sparam,
-}
-
-pkgtype(kind: "executable")

@@ -1,5 +1,0 @@
-! Synthetic verification fixture. This is not a hardware measurement.
-# MHz S RI R 50
-100 0.3 -0.4
-200 0.0 0.1
-300 -0.2 0.0

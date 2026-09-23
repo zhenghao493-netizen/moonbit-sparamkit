@@ -1,153 +1,32 @@
-# MoonBit SParamKit
+# MoonBit ParserCheck
 
-[![Tests](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/ci.yml)
-[![Workbench](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml)
-[![Package](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/package.yml)
-[![Platforms](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml/badge.svg)](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/platforms.yml)
+面向 `moonbitlang/parser` 的语法一致性回归与缺陷修复项目。复用官方解析器和测试框架，将 MoonBit 源码的解析结果与工具链 `mooninfo` 导出的 AST 对照，产出可复现样例、回归测试和针对性的上游补丁。
 
-SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`、`.s2p` 文件的解析、检查和可视化。导入文件后，可以查看 S 参数的幅度、相位曲线，并将结果导出为 CSV 或 JSON。
+需求来源：[Community-Tasks #142：moonbitlang/parser 测试和修复](https://github.com/moonbit-community/Community-Tasks/issues/142)。
 
-项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
+## 本期工作
 
-版本：`0.1.0` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md) · [架构设计](docs/ARCHITECTURE.md)
+1. 固定上游提交及工具链，建立可重复执行的原有测试基线。
+2. 对有效 MoonBit 语法补充组合用例，分别核对手写解析器、生成解析器和参考 AST。
+3. 为差异生成最小复现输入；区分解析器缺陷、工具链版本差异和实验语法。
+4. 对确认的缺陷提交小范围修复和回归测试，保留修复前后的输出。
 
-## 功能
+不重写一套 MoonBit parser，也不将上游现有代码或测试数计入本期新增成果。AST 对照遵循上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)，正常语法是首期重点。
 
-- **文件解析**：读取一端口、二端口 Touchstone 数据，支持注释、科学计数法、跨行记录和常见换行格式。
-- **数值处理**：统一 Hz / kHz / MHz / GHz 单位，转换 RI / MA / DB 表示，提供复数值、幅度、分贝和相位查询。
-- **数据检查**：定位非法选项、不完整记录、频率顺序和已识别的端口阻抗冲突，返回错误码、行列位置及原因，可一键选中错误字段。
-- **离线工作台**：支持文件选择、拖放与文本粘贴，切换 S 参数和频率轴；通过曲线、滑块和方向键逐点读数，并查看分页数据表。
-- **完整导出**：输出全部频点和参数的 CSV / JSON；浏览器与 CLI 使用同一套 MoonBit 核心。
+## 当前阶段
 
-## 快速体验
+改题后的范围确认与基线验证。锁定信息在 `upstream.lock.json`；新申报说明在 `docs/PROPOSAL.md`，选题依据和排重记录在 `docs/TOPIC.md`。基线脚本不修改上游源文件，输出完整命令日志和结果 JSON。
 
-从 [v0.1.0 下载页](https://github.com/zhenghao493-netizen/moonbit-sparamkit/releases/tag/v0.1.0) 获取：
-
-- `SParamKit-0.1.0.html`：单文件离线工作台，保存后用桌面浏览器打开。
-- `SParamKit-0.1.0-submission.zip`：完整交付包，包含工作台、源码、文档和测试报告。解压后打开根目录 `index.html`。
-
-演示顺序和核心设计讲解见 [演示讲稿](docs/DEMO.md)。
-工作台不需要安装 MoonBit、启动服务器或联网。首次打开会载入双端口陷波样例，也可以切换到单端口 RC 负载，或直接导入自己的文件。内置样例为合成电路数据。
-
-选择 S11 / S21 / S12 / S22 查看曲线，按需切换线性或对数频率轴，再点击 CSV 或 JSON 导出。编辑输入后重新解析即可。逐点查看和错误定位的操作见 [曲线读数指南](docs/WORKBENCH.md)。
-
-## 从源码构建
-
-准备 [MoonBit 工具链](https://www.moonbitlang.com/download/)、Node.js 22 和 Python 3.11+：
-
-```bash
-git clone https://github.com/zhenghao493-netizen/moonbit-sparamkit.git
-cd moonbit-sparamkit
-moon build bridge --target js --release --deny-warn
-python tools/build_web.py
+```sh
+git clone https://github.com/moonbitlang/parser.git upstream
+git -C upstream checkout a01fd77e599c12cf9a2182df3456990e74f53ced
+python tools/baseline.py upstream
 ```
 
-构建结果位于 `dist/`，浏览器打开 `dist/index.html` 即可使用。
+需要 MoonBit 官方工具链和 Python 3.11+。仓库 Actions 中的 `Parser topic baseline` 会执行相同流程。
 
-### 命令行
+本分支用于重新申报和后续维护工作，原 Touchstone 项目的主分支及 `v0.1.0` 发布文件保持不变。正式提交新题前需由赛事方确认变更范围；社区任务是需求来源，不代表已获分配或九月报名批准。
 
-```bash
-# 读取双端口文件，输出 JSON
-node dist/cli.cjs dist/samples/synthetic_notch.s2p --format json
+## 来源与许可
 
-# 导出 CSV 到新文件
-node dist/cli.cjs dist/samples/synthetic_notch.s2p --format csv -o result.csv
-
-# 非标准后缀的文件可手动指定端口数
-node dist/cli.cjs input.txt --ports 1 --format json
-```
-
-CLI 根据 `.s1p` / `.s2p` 后缀识别端口数，也可用 `- --ports 1` 从标准输入读取。`-o` 将结果写入新的 UTF-8 文件，已有文件不会被覆盖。更多示例见 [命令行指南](docs/CLI.md)。
-
-退出码为 `0`（成功）、`1`（数据检查失败）、`2`（文件或命令参数错误）。
-
-### MoonBit API
-
-在本地工作区的入口包中使用核心库，`moon.pkg` 配置如下。独立项目还需要配置模块依赖和 `moon.work`，完整步骤见 [库接入指南](docs/LIBRARY.md)：
-
-```moonbit
-import {
-  "ttxiangshang/sparamkit" @sparam,
-}
-
-pkgtype(kind: "executable")
-```
-
-```moonbit
-fn main {
-  let text = "# GHz S RI R 50\n1 0.1 0 0.8 -0.1 0.7 -0.2 0.2 0\n"
-  match @sparam.parse_touchstone(text, 2) {
-    Ok(network) => {
-      let s21 = network.get_s(0, 2, 1).unwrap()
-      println(s21.magnitude())
-      println(network.to_csv())
-    }
-    Err(error) =>
-      println("line \{error.line}:\{error.column}: \{error.message}")
-  }
-}
-```
-
-`get_s(0, 2, 1)` 获取第一个频点的 S21：样本索引从 0 开始，端口从 1 开始。更多接口见 [API 定义](pkg.generated.mbti)。目前通过运行包或源码使用，Mooncakes 包列入后续发布计划。
-
-## 格式支持
-
-| 项目 | 支持范围 |
-| --- | --- |
-| 文件 | Touchstone 1.x 的一端口、二端口 S 参数子集 |
-| 数值格式 | RI、MA、DB；频率单位为 Hz、kHz、MHz、GHz |
-| 参考阻抗 | 各端口共用一个正实数参考阻抗，保留文件头的 R 值 |
-| 文本 | UTF-8、LF / CRLF / CR 换行、一个开头 BOM、注释与科学计数法 |
-| 工作台与 CLI 输入 | 文件不超过 2 MiB，最多 20,000 个频点 |
-
-数据前需要 `#` 选项行，频率须非负且严格递增。二端口文件按 S11、S21、S12、S22 顺序读取。零幅度的分贝与相位在界面中留空，在 JSON 中记为 `null`。
-
-暂不支持 Touchstone 2.0 关键字、多端口、噪声参数和阻抗重归一化。对识别到的 `Port Impedance` 声明会检查其与文件头是否一致；其他厂商扩展的处理方式、资源限制和绘图约定见 [兼容性说明](docs/COMPATIBILITY.md)。
-
-分贝采用缩放后的复数分量计算，避免极小幅度舍入或中间结果溢出影响读数。计算约定与精度测试见 [数值说明](docs/NUMERICS.md)。
-
-## 开发与测试
-
-```bash
-# 核心检查、构建和测试（JS / wasm-gc）
-bash tools/verify.sh
-
-# 构建工作台后，运行 CLI 与运行包检查
-python tools/test_host.py
-
-# 检查源码包并在新目录中重新构建
-python tools/check_package.py
-
-# 在独立 MoonBit 项目中验证公开 API
-python tools/test_consumer.py
-
-# 检查文档链接并原样运行 Markdown 中的接入示例
-python tools/test_documentation.py
-
-# 用高精度参考结果检查两个后端的数值边界
-python tools/test_numeric.py
-```
-
-Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node 命令相同。
-
-核心库包含 104 个测试（含 10 个公开 API 黑盒测试），分别运行在 JS 和 wasm-gc 上。CI 还覆盖 Decimal 高精度边界对照、scikit-rf 数值对照、公开文件样例、文件读写故障、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
-
-解析、数值转换、诊断和数据导出在 MoonBit 中实现；`bridge/` 提供调用入口，`web/` 负责界面，`tools/` 包含 CLI 包装、构建和测试脚本。Python 与 scikit-rf 用于构建及测试。
-
-## 准备验收包
-
-安装 [验收指南](docs/ACCEPTANCE.md) 中的测试依赖后运行：
-
-```bash
-python tools/prepare_submission.py
-```
-
-脚本依次完成核心测试、库接入、数值对照、浏览器操作和源码包重建，全部通过后在 `_build/submission/` 生成 ZIP。包内附有版本、构建标识、日志和文件校验清单。Git 工作区需先提交改动；从源码 ZIP 重建时使用本地源码标识。
-
-重新构建工作台前，请把自行导出的结果移出 `dist/`；构建器会拒绝夹带无关文件，但不会删除它们。
-
-## 项目与许可
-
-本项目参加 2026 MoonBit 黑客松，方向为数据处理。开发中使用 AI 辅助编码、测试和文档整理，格式参考与测试数据来源分别见 [参考资料](docs/REFERENCES.md) 和 [测试数据说明](docs/TEST_DATA.md)。
-
-采用 [MIT 许可证](LICENSE)。
+上游 `moonbitlang/parser` 使用 Apache-2.0。本项目新增脚本和测试采用 Apache-2.0；上游代码、作者和许可证保持原样。AI 辅助用于测试设计、定位和文档。对上游的提交按其贡献流程进行。
