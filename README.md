@@ -1,32 +1,51 @@
 # MoonBit ParserCheck
 
-面向 `moonbitlang/parser` 的语法一致性回归与缺陷修复项目。复用官方解析器和测试框架，将 MoonBit 源码的解析结果与工具链 `mooninfo` 导出的 AST 对照，产出可复现样例、回归测试和针对性的上游补丁。
+为 `moonbitlang/parser` 补充语法回归用例、最小复现和修复补丁。项目复用官方解析器与测试框架，对照 Handrolled、MoonYacc、CST 转换和工具链参考 AST，定位解析结果及源码位置的不一致。
 
 需求来源：[Community-Tasks #142：moonbitlang/parser 测试和修复](https://github.com/moonbit-community/Community-Tasks/issues/142)。
 
-## 本期工作
+[项目说明](docs/PROPOSAL.md) · [选题依据](docs/TOPIC.md) · [基线记录](verification/BASELINE.md)
 
-1. 固定上游提交及工具链，建立可重复执行的原有测试基线。
-2. 对有效 MoonBit 语法补充组合用例，分别核对手写解析器、生成解析器和参考 AST。
-3. 为差异生成最小复现输入；区分解析器缺陷、工具链版本差异和实验语法。
-4. 对确认的缺陷提交小范围修复和回归测试，保留修复前后的输出。
+## 当前贡献
 
-不重写一套 MoonBit parser，也不将上游现有代码或测试数计入本期新增成果。AST 对照遵循上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)，正常语法是首期重点。
+### 负数模式的位置范围
 
-## 当前阶段
+对于 `match` 中的 `-1`，Handrolled 和 CST 转换生成的位置只覆盖数字 `1`，MoonYacc 则覆盖完整的 `-1`。候选补丁统一这两个实现的起止位置，保留原有常量值和 AST 字段。
 
-改题后的范围确认与基线验证。锁定信息在 `upstream.lock.json`；新申报说明在 `docs/PROPOSAL.md`，选题依据和排重记录在 `docs/TOPIC.md`。基线脚本不修改上游源文件，输出完整命令日志和结果 JSON。
+- 上游讨论：[moonbitlang/parser #188](https://github.com/moonbitlang/parser/issues/188)。
+- [源码补丁](patches/0001-negative-pattern-locations.patch)：修改手写解析器和 CST 转换，共两处实现文件。
+- [七个回归用例](regressions/negative_pattern_loc_test.mbt)：覆盖整数、浮点、空白、区间、或模式、嵌套和正数对照。
+- [执行记录](verification/NEGATIVE_PATTERNS.md)：原版 6 项失败、1 项通过；应用补丁后 7 项全部通过，四个后端的完整上游测试通过。
 
-```sh
+补丁已完成本分支验证，正在请求上游确认位置约定，尚未合并到官方仓库。
+
+## 运行回归验证
+
+准备 MoonBit 工具链、Node.js、Python 3.11+；native 测试还需要本地 C 编译环境。当前验证环境为 moonc `v0.10.14+7d59c7ec9`，上游提交由 `upstream.lock.json` 固定。
+
+```bash
 git clone https://github.com/moonbitlang/parser.git upstream
 git -C upstream checkout a01fd77e599c12cf9a2182df3456990e74f53ced
-python tools/baseline.py upstream
+(cd upstream && moon update)
+python tools/verify_patch.py upstream
 ```
 
-需要 MoonBit 官方工具链和 Python 3.11+。仓库 Actions 中的 `Parser topic baseline` 会执行相同流程。
+脚本先编译并运行新增测试，确认原版能复现问题；随后应用补丁、运行相同测试，再执行 `moon test --target all`。日志和 JSON 结果保存在 `reports/negative-patterns/`。
 
-本分支用于重新申报和后续维护工作，原 Touchstone 项目的主分支及 `v0.1.0` 发布文件保持不变。正式提交新题前需由赛事方确认变更范围；社区任务是需求来源，不代表已获分配或九月报名批准。
+请使用单独的上游工作副本：脚本会添加回归文件并应用补丁，结束后保留这些改动供检查。只核对未修改的基线时，在另一个干净检出目录执行 `python tools/baseline.py <目录>`。
 
-## 来源与许可
+## 差异筛查
 
-上游 `moonbitlang/parser` 使用 Apache-2.0。本项目新增脚本和测试采用 Apache-2.0；上游代码、作者和许可证保持原样。AI 辅助用于测试设计、定位和文档。对上游的提交按其贡献流程进行。
+`probe/` 用 MoonBit 调用三种解析入口；`tools/probe.cjs` 提供 JSON 进出通道。探针可同时保留或隐藏源码位置，便于将 AST 内容差异与位置差异分开检查。探针构建见 [工作流](.github/workflows/parser-triage.yml)。
+
+首轮 16 份输入的原始参考对照保存在 [PILOT.md](verification/PILOT.md)。其中的 `ApplyAttr::NoAttr` 导出结构差异单独跟踪，不通过删字段或更新参考快照消除。负数模式补丁不涉及这部分输出。
+
+后续贡献沿用上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)：有效语法、最小复现、问题确认、针对性回归和小范围修复。
+
+## 开发与许可
+
+新增修复和回归逻辑使用 MoonBit；Python 负责执行测试及整理报告。上游现有源码和测试作为基线，本期新增工作按补丁与测试文件记录。
+
+本分支为 `reselect/parser-conformance`，原 SParamKit 主分支与发布版本保留。改题申报信息见 [项目说明](docs/PROPOSAL.md)。
+
+采用 [Apache-2.0](LICENSE)。上游作者和版权说明保持原样。开发中使用 AI 辅助测试设计、问题定位和文档整理。
