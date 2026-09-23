@@ -49,9 +49,10 @@ def main() -> int:
             if len(names) != len(set(names)):
                 raise RuntimeError('Duplicate archive entry')
             required = {'moon.mod', 'moon.pkg', 'LICENSE', 'README.md', 'parser.mbt',
-                        'pkg.generated.mbti', 'compatibility_wbtest.mbt', 'api_test.mbt', 'docs/CLI.md',
+                        'pkg.generated.mbti', 'compatibility_wbtest.mbt', 'api_test.mbt',
                         'docs/COMPATIBILITY.md', 'docs/TEST_DATA.md',
-                        'tools/build_web.py', 'tools/cli.cjs', 'web/index.html'}
+                        'tools/build_web.py', 'tools/cli.cjs', 'tools/test_cli.py',
+                        'tools/test_consumer.py', 'tools/test_file_faults.py', 'web/index.html'}
             if not required.issubset(names):
                 raise RuntimeError('Package missing required files: ' + str(required - set(names)))
             for info in z.infolist():
@@ -64,7 +65,7 @@ def main() -> int:
                     raise RuntimeError('Build/cache content leaked into package: ' + info.filename)
                 if any(x.startswith('.env') or x.endswith(('.pem', '.key')) for x in p.parts):
                     raise RuntimeError('Potential credential path in package: ' + info.filename)
-                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json'}:
+                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json', 'cli-tests.json', 'consumer-tests.json', 'file-fault-tests.json'}:
                     raise RuntimeError('Generated verification output leaked into source package')
             if z.read('LICENSE') != (ROOT / 'LICENSE').read_bytes():
                 raise RuntimeError('LICENSE differs in package')
@@ -80,12 +81,12 @@ def main() -> int:
                 example = json.loads(run(['node', 'dist/cli.cjs', 'dist/samples/synthetic_notch.s2p', '--format', 'json'], directory))
                 if not example.get('ok') or example.get('sample_count') != 291:
                     raise RuntimeError('Packaged CLI produced unexpected sample output')
-                output = directory / 'saved-result.json'
-                saved_stdout = run(['node', 'dist/cli.cjs', 'dist/samples/synthetic_notch.s2p',
-                                    '--output', str(output)], directory)
-                if saved_stdout or json.loads(output.read_text(encoding='utf-8')) != example:
-                    raise RuntimeError('Packaged --output differs from stdout report')
-
+                run([sys.executable, 'tools/test_cli.py'], directory)
+                run([sys.executable, 'tools/test_consumer.py'], directory)
+                run([sys.executable, 'tools/test_file_faults.py'], directory)
+                REPORT['file_faults'] = json.loads((directory / 'verification/file-fault-tests.json').read_text(encoding='utf-8'))
+                REPORT['cli'] = json.loads((directory / 'verification/cli-tests.json').read_text(encoding='utf-8'))
+                REPORT['external_consumer'] = json.loads((directory / 'verification/consumer-tests.json').read_text(encoding='utf-8'))
         REPORT.update(status='passed', archive=stem, sha256=archive_hash,
                       files=len(names), fresh_extraction_rebuilt=True,
                       publication='not attempted')

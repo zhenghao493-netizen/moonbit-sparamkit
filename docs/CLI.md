@@ -1,65 +1,55 @@
-# SParamKit 命令行指南
+# 命令行指南
 
-文件 CLI 和浏览器工作台使用相同的 MoonBit 核心。以下命令在解压后的运行包目录执行，需要 Node.js 22。
+运行包附带 `cli.cjs`，需要 Node.js 22。以下命令在运行包解压目录执行；从源码构建后，将路径改为 `dist/cli.cjs`。
 
-## 常用命令
+## 读取文件
 
 ```bash
-# 输出 JSON 到终端
-node cli.cjs samples/synthetic_notch.s2p
-
-# 保存 CSV，直接写入 UTF-8 文件
-node cli.cjs samples/synthetic_notch.s2p --format csv --output result.csv
-
-# 保存 JSON，-o 是 --output 的简写
-node cli.cjs samples/synthetic_notch.s2p -o result.json
-
-# 手动指定端口数
-node cli.cjs input.txt --ports 2 --format csv -o result.csv
-
-# 文件名以短横线开头时，用 -- 分隔选项与文件名
-node cli.cjs --format json -- --antenna.s1p
-
-# 查看帮助
+node cli.cjs samples/synthetic_notch.s2p --format json
+node cli.cjs samples/synthetic_notch.s2p --format csv -o result.csv
+node cli.cjs input.txt --ports 1 -o result.json
+node cli.cjs --version
 node cli.cjs --help
 ```
 
-在源码仓库中构建后，把命令中的 `cli.cjs` 改为 `dist/cli.cjs`，示例路径改为 `dist/samples/...`。
+默认输出 JSON。`.s1p`、`.s2p` 后缀用于识别端口数，`--ports` 可显式指定。遇到以短横线开头的文件名，使用 `--` 结束选项解析：
 
-## 参数
+```bash
+node cli.cjs --format json -- --antenna.s1p
+```
 
-| 参数 | 用途 |
-| --- | --- |
-| 输入文件 | 一个 `.s1p` 或 `.s2p` 文件；其他后缀需要指定端口数 |
-| `--ports 1\|2` | 指定端口数，优先于文件后缀 |
-| `--format json\|csv` | 输出格式，默认为 JSON |
-| `--output FILE` / `-o FILE` | 保存到一个新文件；省略时使用标准输出 |
-| `--` | 后面的内容按输入文件名处理 |
+## 管道输入
 
-每项选项只能指定一次。路径包含空格时请加引号；输出文件名以短横线开头时，在路径前加 `./`，例如 `-o ./--result.csv`。
+使用 `-` 从标准输入读取，并提供端口数。下面的命令适用于 Bash：
+
+```bash
+cat antenna.s1p | node cli.cjs - --ports 1 --format csv -o antenna.csv
+```
+
+管道中的字节应为 UTF-8。不同终端对管道文本的编码处理不同；在 PowerShell 中，直接传入文件路径更方便：
+
+```powershell
+node cli.cjs '测量数据.s1p' --format csv -o '分析结果.csv'
+```
+
+文件和标准输入均限制为 2 MiB，最多 20,000 个频点。读取按块计数，超限即返回错误；数据解析仍使用 MoonBit 核心。
 
 ## 输出文件
 
-`--output` 在解析成功后创建文件，统一使用 UTF-8、无 BOM。它不会覆盖已有文件，也不会自动创建父目录。输出到输入文件本身同样会被拒绝，原文件保持不变。文件写入失败时会尝试删除本次产生的不完整文件。
+`-o` 或 `--output` 将结果直接写成 UTF-8，无需依赖终端重定向的文本编码设置。输出路径的父目录必须已存在。
 
-使用 `--output` 成功时不往终端打印数据。省略此参数仍可使用标准输出和管道，例如：
+已有文件不会被覆盖，包括输入文件本身。需要重新导出时，请换一个文件名，或先自行处理旧结果。数据检查失败时不会创建输出文件。
 
-```bash
-node cli.cjs samples/synthetic_notch.s2p --format json > result.json
-```
+不使用 `-o`，或指定 `-o -`，会写入标准输出。完整运行包的文件清单会检测额外文件；执行完整性检查前，请将分析结果保存在运行包目录之外。
 
-需要跨终端保持相同输出编码时，使用 `--output`。
+## 退出码与诊断
 
-## 错误处理
-
-| 退出码 | 含义 | 输出位置 |
+| 退出码 | 含义 | 输出 |
 | --- | --- | --- |
-| `0` | 成功，或显示帮助 | 指定文件或标准输出 |
-| `1` | 文件内容未通过解析或数据检查 | 标准输出中的诊断 JSON；不创建目标文件 |
-| `2` | 命令参数、文件读取或写入错误 | 标准错误中的错误说明 |
+| `0` | 成功 | CSV / JSON 写入标准输出或指定文件 |
+| `1` | 数据检查失败 | 带错误码、行列位置和原因的 JSON |
+| `2` | 参数、读取或写入错误 | 标准错误输出中的文字说明 |
 
-例如，不完整记录或参考阻抗冲突会产生带错误码、行号、列号的 JSON。即使指定 `--format csv`，失败时也返回诊断 JSON，而不是把错误说明写进 CSV。
+默认模式保留 JSON 诊断到标准输出，便于脚本读取。使用 `-o 文件名` 时，JSON 诊断改写到标准错误输出，输出文件保持不变。CSV 模式遇到数据错误也返回 JSON 诊断，因此调用脚本应检查退出码，不要只判断是否收到文本。
 
-## 输入范围
-
-文件须为 UTF-8，最多 2 MiB、20,000 个频点，支持一个开头 BOM 和 LF / CRLF / CR 换行。读取过程中出现文件增长时仍执行大小限制。具体 Touchstone 支持范围见 [兼容性说明](COMPATIBILITY.md)。
+`--ports`、`--format` 和 `--output` 各只能出现一次，避免相互覆盖设置。输出管道提前关闭时返回退出码 `2`，不打印未捕获异常堆栈。

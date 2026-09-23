@@ -14,3 +14,6 @@ verification/browser-tests.json
 verification/measured-files.json
 verification/package-check.json
 verification/host-tests.json
+verification/cli-tests.json
+verification/consumer-tests.json
+verification/file-fault-tests.json
