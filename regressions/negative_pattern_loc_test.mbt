@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-using @syntax {trait IterVisitor}
-
-///|
 struct PatternFragments {
   source : String
   fragments : Array[String]
 }
 
 ///|
-extend PatternFragments with IterVisitor::{visit_Impl}
+extend PatternFragments with @syntax.IterVisitor::{visit_Impl}
 
 ///|
-impl IterVisitor for PatternFragments with fn visit_Pattern_Constant(
+impl @syntax.IterVisitor for PatternFragments with fn visit_Pattern_Constant(
   self,
   c~,
   loc~,
