@@ -20,7 +20,7 @@ REPORTS = (
     'host-tests.json', 'cli-tests.json', 'file-fault-tests.json',
     'distribution-tests.json', 'consumer-tests.json', 'numeric-tests.json',
     'crosscheck.json', 'measured-files.json', 'browser-tests.json',
-    'numeric-browser-tests.json', 'worker-tests.json', 'package-check.json',
+    'numeric-browser-tests.json', 'worker-tests.json', 'documentation-tests.json', 'package-check.json',
 )
 
 
@@ -114,7 +114,8 @@ def main() -> int:
             run('workbench', [sys.executable, 'tools/build_web.py'])
             for label, script in (
                 ('host', 'test_host.py'), ('distribution', 'test_distribution.py'),
-                ('consumer', 'test_consumer.py'), ('numeric', 'test_numeric.py'),
+                ('consumer', 'test_consumer.py'), ('documentation', 'test_documentation.py'),
+                ('numeric', 'test_numeric.py'),
                 ('scikit-rf', 'crosscheck.py'), ('public-files', 'test_measured.py'),
                 ('browser', 'test_browser.py'), ('numeric-browser', 'test_numeric_browser.py'),
                 ('worker-recovery', 'test_worker_recovery.py'),
@@ -148,18 +149,20 @@ def main() -> int:
                 shutil.copyfile(verification/name, stage/'reports'/name)
             for name in ('ui-desktop.png', 'ui-mobile.png'):
                 shutil.copyfile(verification/name, stage/'reports'/name)
+            run('review-index', [sys.executable, 'tools/build_review_index.py', str(stage)])
             summary.update(status='passed', completed_utc=dt.datetime.now(dt.timezone.utc).isoformat(),
                            source_archive_sha256=package['sha256'],
                            core_sha256=tool_manifest['sha256']['core.cjs'],
-                           reports=list(REPORTS), browser_mode='file')
+                           reports=[*REPORTS, 'review-index-tests.json'], browser_mode='file')
             (stage/'reports/submission-check.json').write_text(
                 json.dumps(summary, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
             readme = f'''# SParamKit {version} 验收包
 
-直接打开 `workbench/index.html` 即可使用离线工作台，不需要安装开发环境。
+打开根目录 `index.html` 进入评审首页，再点击“打开离线工作台”。也可直接打开 `workbench/index.html`。
 
 | 目录 / 文件 | 内容 |
 | --- | --- |
+| `index.html` | 离线评审入口、演示路线和本次报告摘要 |
 | `workbench/` | 离线 HTML、文件 CLI、合成样例和完整性清单 |
 | `source/` | 已在新目录中重建并测试的完整 MoonBit 源码 |
 | `source/docs/SUBMISSION.md` | 申报功能与实现、演示、测试的对应关系 |

@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-rc.2` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-rc.3` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md) · [架构设计](docs/ARCHITECTURE.md)
 
 ## 功能
 
@@ -21,7 +21,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 ## 快速体验
 
-评审和完整试用可在 [验收包构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/submission.yml) 下载成功运行的 `sparamkit-submission` 附件。解压其中的提交包，打开 `workbench/index.html`；源码、演示说明和本次测试报告也包含在同一个包中。
+评审和完整试用可在 [验收包构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/submission.yml) 下载成功运行的 `sparamkit-submission` 附件。解压其中的提交包，打开根目录 `index.html`，由评审首页进入工作台；源码、演示说明和本次测试报告也包含在同一个包中。
 
 在 [工具构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml) 选择一次成功运行，从 **Artifacts** 下载 `sparamkit-tool`。解压后，用桌面浏览器打开 `index.html`。
 
@@ -118,6 +118,9 @@ python tools/check_package.py
 
 # 在独立 MoonBit 项目中验证公开 API
 python tools/test_consumer.py
+
+# 检查文档链接并原样运行 Markdown 中的接入示例
+python tools/test_documentation.py
 
 # 用高精度参考结果检查两个后端的数值边界
 python tools/test_numeric.py

@@ -53,6 +53,7 @@ def main() -> int:
                         'docs/COMPATIBILITY.md', 'docs/TEST_DATA.md',
                         'tools/build_web.py', 'tools/cli.cjs', 'tools/test_cli.py',
                         'tools/prepare_submission.py', 'tools/test_distribution.py', 'docs/SUBMISSION.md',
+                        'tools/test_documentation.py', 'tools/build_review_index.py', 'docs/ARCHITECTURE.md',
                         'tools/test_worker_recovery.py', 'tools/test_consumer.py', 'tools/test_file_faults.py', 'tools/test_numeric.py', 'numeric_wbtest.mbt', 'tools/test_numeric_browser.py', 'web/index.html'}
             if not required.issubset(names):
                 raise RuntimeError('Package missing required files: ' + str(required - set(names)))
@@ -66,7 +67,7 @@ def main() -> int:
                     raise RuntimeError('Build/cache content leaked into package: ' + info.filename)
                 if any(x.startswith('.env') or x.endswith(('.pem', '.key')) for x in p.parts):
                     raise RuntimeError('Potential credential path in package: ' + info.filename)
-                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json', 'cli-tests.json', 'consumer-tests.json', 'numeric-tests.json', 'numeric-browser-tests.json', 'file-fault-tests.json', 'distribution-tests.json', 'worker-tests.json'}:
+                if p.suffix in {'.log', '.png'} or p.name in {'crosscheck.json', 'measured-files.json', 'browser-tests.json', 'package-check.json', 'host-tests.json', 'cli-tests.json', 'consumer-tests.json', 'numeric-tests.json', 'numeric-browser-tests.json', 'file-fault-tests.json', 'distribution-tests.json', 'worker-tests.json', 'documentation-tests.json'}:
                     raise RuntimeError('Generated verification output leaked into source package')
             if z.read('LICENSE') != (ROOT / 'LICENSE').read_bytes():
                 raise RuntimeError('LICENSE differs in package')
@@ -87,6 +88,8 @@ def main() -> int:
                 run([sys.executable, 'tools/test_cli.py'], directory)
                 run([sys.executable, 'tools/test_file_faults.py'], directory)
                 REPORT['file_faults'] = json.loads((directory / 'verification/file-fault-tests.json').read_text(encoding='utf-8'))
+                run([sys.executable, 'tools/test_documentation.py'], directory)
+                REPORT['documentation'] = json.loads((directory / 'verification/documentation-tests.json').read_text(encoding='utf-8'))
                 run([sys.executable, 'tools/test_consumer.py'], directory)
                 run([sys.executable, 'tools/test_numeric.py'], directory)
                 REPORT['numeric'] = json.loads((directory / 'verification/numeric-tests.json').read_text(encoding='utf-8'))

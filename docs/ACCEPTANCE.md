@@ -14,7 +14,7 @@ python tools/prepare_submission.py
 
 Linux 如缺少浏览器系统依赖，使用 `python -m playwright install --with-deps chromium`。Git 工作区先提交改动；完整验收期间不要修改源码。
 
-全部检查通过后，`_build/submission/` 中生成 `SParamKit-<版本>-submission.zip`。解压后直接打开 `workbench/index.html`。包中另有 `source/`、`reports/`、演示说明和整体文件清单。执行 `python verify_download.py` 可核对解压后的文件。
+全部检查通过后，`_build/submission/` 中生成 `SParamKit-<版本>-submission.zip`。解压后打开根目录 `index.html`，从评审首页进入工作台，也可直接打开 `workbench/index.html`。包中另有 `source/`、`reports/`、演示说明和整体文件清单。执行 `python verify_download.py` 可核对解压后的文件。
 
 检查失败时不生成成功提交包；原因保存在 `_build/submission/submission-check.json`，失败命令日志为 `failed-step.log`。完整验收会实际打开本地 HTML，不使用注入页面替代此项检查。
 
@@ -69,15 +69,17 @@ python tools/test_numeric_browser.py
 python tools/test_worker_recovery.py
 python tools/test_numeric.py
 python tools/test_consumer.py
+python tools/test_documentation.py
 ```
 
-Linux 如缺少浏览器系统依赖，可使用 `python -m playwright install --with-deps chromium` 安装。其他浏览器环境的执行方式见 [跨平台工作流](../.github/workflows/platforms.yml)。
+Linux 如缺少浏览器系统依赖，可使用 `python -m playwright install --with-deps chromium` 安装。其他浏览器环境的执行方式见 [跨平台工作流](https://github.com/zhenghao493-netizen/moonbit-sparamkit/blob/main/.github/workflows/platforms.yml)。
 
 | 脚本 | 核验内容 |
 | --- | --- |
 | `tools/crosscheck.py` | 与 scikit-rf 对照频率、参考阻抗、复数值、幅度、相位和 CSV 导出 |
 | `tools/test_measured.py` | 核对固定版本的公开样例及其来源哈希，比较解析结果 |
 | `tools/test_worker_recovery.py` | 注入线程启动、消息发送与超时故障，检查保留输入及重试导出 |
+| `tools/test_documentation.py` | 原样编译 README 与库接入指南中的示例，并检查本地文档链接 |
 | `tools/test_browser.py` | 在本地文件模式下检查导入、绘图、导出、错误恢复和异步交互 |
 
 结果与日志保存在 `verification/`。测试数据的构成和来源见 [TEST_DATA.md](TEST_DATA.md)，各阶段运行记录见 [verification/](../verification/)；统一提交包的本次结果见包内 `reports/submission-check.json`。

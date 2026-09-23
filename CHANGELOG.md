@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-rc.3
+
+- Add an offline review homepage to the submission bundle, linking the workbench, demonstration route and current reports.
+- Compile the README and library-guide examples verbatim on JS and wasm-gc, both from the checkout and the extracted source package.
+- Fix the CI configuration link in the offline source documentation and validate local documentation targets.
+- Add an architecture guide covering the shared MoonBit core and main data flow.
+- Keep the public API, numerical implementation and 104 core tests unchanged.
+
 ## 0.1.0-rc.2
 
 - Recover from worker startup, message and timeout failures without reloading the workbench.
