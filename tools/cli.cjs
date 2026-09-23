@@ -58,7 +58,9 @@ function parseArgs(args) {
 }
 
 function readFileBounded(file) {
-  const fd = fs.openSync(file, 'r');
+  // Nonblocking open lets us reject FIFOs before waiting for a writer.
+  const flags = fs.constants.O_RDONLY | (process.platform === 'win32' ? 0 : fs.constants.O_NONBLOCK);
+  const fd = fs.openSync(file, flags);
   try {
     const stat = fs.fstatSync(fd);
     if (!stat.isFile() || stat.size > LIMIT) throw new Error('Input must be a regular file no larger than 2 MiB');

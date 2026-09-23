@@ -2,6 +2,7 @@
 """File/stdin/output integration tests against the compiled MoonBit CLI."""
 from __future__ import annotations
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -105,6 +106,13 @@ def main() -> None:
             call([source, '-o', link], 2)
             assert output.read_bytes() == keep and link.is_symlink()
             checks.append('symbolic-link output is protected')
+        if hasattr(os, 'mkfifo'):
+            fifo = td/'fifo.s1p'; os.mkfifo(fifo)
+            p = call([fifo], 2)
+            assert b'regular file' in p.stderr
+            checks.append('named pipe input is rejected without waiting for a writer')
+        else:
+            skipped.append('POSIX FIFO creation unavailable on this host')
         # A real closed pipe must yield a controlled exit, not an uncaught stack trace.
         large = td/'large.s2p'
         large.write_text('# Hz S RI R 50\n' + ''.join(f'{i} .1 0 .2 0 .3 0 .4 0\n' for i in range(20000)), encoding='utf-8')
