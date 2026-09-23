@@ -1,0 +1,46 @@
+name: Final review of delivered RC3
+on:
+  workflow_dispatch:
+  push:
+    branches: [review/rc3-final-check]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  delivered-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the already delivered RC3, not a new build
+        uses: actions/download-artifact@v4
+        with:
+          name: sparamkit-submission
+          run-id: 35812809697
+          github-token: ${{ github.token }}
+          path: candidate-download
+      - name: Install review tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Walk through and rebuild the pinned candidate
+        run: python .github/scripts/review_rc3.py candidate-download/SParamKit-0.1.0-rc.3-submission.zip --out review-results
+      - name: Retain closeout report and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc3-final-review
+          path: review-results/
+          if-no-files-found: error
+          retention-days: 90
