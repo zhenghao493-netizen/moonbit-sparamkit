@@ -1,0 +1,64 @@
+name: Build parser triage probe
+on:
+  push:
+    branches: [reselect/parser-conformance]
+    paths: ['probe/**', 'tools/probe.cjs', '.github/workflows/parser-triage.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: moonbitlang/parser
+          ref: a01fd77e599c12cf9a2182df3456990e74f53ced
+          path: upstream
+          persist-credentials: false
+      - name: Install and identify toolchain
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          mkdir -p reports
+          "$HOME/.moon/bin/moon" version --all | tee reports/toolchain.log
+          "$HOME/.moon/bin/moonc" -v | grep 'v0.10.14+7d59c7ec9'
+      - name: Build three-parser probe without changing upstream sources
+        run: |
+          set -euo pipefail
+          cp -R probe upstream/parsercheck_probe
+          cd upstream
+          moon update
+          moon fmt parsercheck_probe
+          moon build parsercheck_probe --target js --release --deny-warn 2>&1 | tee ../reports/build.log
+          git diff --exit-code
+          cd ..
+          mkdir -p dist
+          cp upstream/_build/js/release/build/parsercheck_probe/parsercheck_probe.js dist/probe.cjs
+          cp tools/probe.cjs dist/driver.cjs
+          cp fixtures/pilot.json dist/pilot.json
+          cp reports/toolchain.log dist/toolchain.log
+          node tools/probe.cjs dist/probe.cjs < fixtures/pilot.json > reports/parses.json
+          git archive --format=tar.gz -o /tmp/parsercheck-source.tar.gz HEAD
+          cp /tmp/parsercheck-source.tar.gz dist/source.tar.gz
+          sha256sum dist/probe.cjs > reports/compiled.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parsercheck-probe
+          path: dist/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parsercheck-triage-evidence
+          path: reports/
+          retention-days: 14
