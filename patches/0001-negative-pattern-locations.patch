@@ -1,0 +1,49 @@
+diff --git a/handrolled_parser/parser.mbt b/handrolled_parser/parser.mbt
+--- a/handrolled_parser/parser.mbt
++++ b/handrolled_parser/parser.mbt
+@@ -1848,21 +1848,22 @@
+       Constant(c=@syntax.make_double(x), loc~)
+     }
+     MINUS => {
++      let spos = self.peek_spos()
+       self.expect_token(TK_MINUS)
+       match self.peek_token() {
+         INT(x) => {
+-          let loc = self.peek_location()
+           self.expect_token(TK_INT)
++          let loc = self.loc_start_with(spos)
+           Constant(c=@syntax.make_int("-\{x}"), loc~)
+         }
+         FLOAT(x) => {
+-          let loc = self.peek_location()
+           self.expect_token(TK_FLOAT)
++          let loc = self.loc_start_with(spos)
+           Constant(c=@syntax.make_float("-\{x}"), loc~)
+         }
+         DOUBLE(x) => {
+-          let loc = self.peek_location()
+           self.expect_token(TK_DOUBLE)
++          let loc = self.loc_start_with(spos)
+           Constant(c=@syntax.make_double("-\{x}"), loc~)
+         }
+         other => {
+diff --git a/untyped_cst/lower.mbt b/untyped_cst/lower.mbt
+--- a/untyped_cst/lower.mbt
++++ b/untyped_cst/lower.mbt
+@@ -3279,15 +3279,7 @@
+     Pattern_Any | Pattern_MissingPattern => Any(loc=node.loc)
+     Pattern_Constant =>
+       if lower_constant_from_node(node) is Some(c) {
+-        let loc = if node.has_child_kind(Operator_UnaryMinus) {
+-          node
+-          .first_child_with_label("semantic_constant")
+-          .map(constant => constant.loc)
+-          .unwrap_or(node.loc)
+-        } else {
+-          node.loc
+-        }
+-        Constant(c~, loc~)
++        Constant(c~, loc=node.loc)
+       } else {
+         Any(loc=node.loc)
+       }
