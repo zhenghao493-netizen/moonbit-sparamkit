@@ -94,9 +94,10 @@ async function readStdinBounded() {
 function writeNewFile(file, text) {
   // Open exclusively after successful analysis: never truncate an existing path.
   const fd = fs.openSync(file, 'wx');
-  const identity = fs.fstatSync(fd);
+  let identity;
   let closed = false;
   try {
+    identity = fs.fstatSync(fd);
     fs.writeFileSync(fd, text, 'utf8');
     fs.closeSync(fd); closed = true;
   } catch (error) {
@@ -104,7 +105,7 @@ function writeNewFile(file, text) {
     // Best-effort cleanup of our partial file, not a replacement made by others.
     try {
       const now = fs.lstatSync(file);
-      if (now.isFile() && now.dev === identity.dev && now.ino === identity.ino) fs.unlinkSync(file);
+      if (identity && now.isFile() && now.dev === identity.dev && now.ino === identity.ino) fs.unlinkSync(file);
     } catch (_) {}
     throw error;
   }

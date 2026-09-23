@@ -1,6 +1,6 @@
 # Touchstone compatibility matrix
 
-Scope: `0.1.0-dev.8`, one/two-port single-ended S parameters. This is an implementation contract, **not full Touchstone conformance**.
+Scope: `0.1.0-dev.9`, one/two-port single-ended S parameters. This is an implementation contract, **not full Touchstone conformance**.
 
 Reference: [IBIS Touchstone 2.0 specification](https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf), specifically its explicit **Version 1.0** rules: general syntax (printed p.4), option line (pp.6–7), network records/order (pp.12–14), noise data (pp.23–25). Using those legacy clauses does not imply support for version-2 keywords. The source implementation and tests decide current behaviour; differences below are intentional and visible.
 

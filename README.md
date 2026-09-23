@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-dev.8` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-dev.9` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
 
 ## 功能
 
@@ -123,7 +123,7 @@ python tools/test_numeric.py
 
 Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node 命令相同。
 
-核心库包含 94 个单元测试，分别运行在 JS 和 wasm-gc 上。CI 还覆盖 Decimal 高精度边界对照、scikit-rf 数值对照、公开文件样例、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
+核心库包含 104 个测试（含 10 个公开 API 黑盒测试），分别运行在 JS 和 wasm-gc 上。CI 还覆盖 Decimal 高精度边界对照、scikit-rf 数值对照、公开文件样例、文件读写故障、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
 
 解析、数值转换、诊断和数据导出在 MoonBit 中实现；`bridge/` 提供调用入口，`web/` 负责界面，`tools/` 包含 CLI 包装、构建和测试脚本。Python 与 scikit-rf 用于构建及测试。
 

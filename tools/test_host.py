@@ -93,6 +93,7 @@ def main() -> None:
         assert not (td/'dist/index.html').exists()
         checks.append('builder refuses stale core.cjs when compiled bridge is absent')
     subprocess.run([sys.executable, str(ROOT/'tools/test_cli.py')], check=True, timeout=180)
+    subprocess.run([sys.executable, str(ROOT/'tools/test_file_faults.py')], check=True, timeout=180)
     result = {'status':'passed', 'checks':len(checks), 'details':checks}
     (ROOT/'verification/host-tests.json').write_text(json.dumps(result, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(result, indent=2))

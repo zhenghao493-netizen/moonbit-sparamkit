@@ -18,3 +18,4 @@ verification/cli-tests.json
 verification/consumer-tests.json
 verification/numeric-tests.json
 verification/numeric-browser-tests.json
+verification/file-fault-tests.json
