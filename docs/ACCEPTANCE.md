@@ -66,6 +66,7 @@ python tools/crosscheck.py
 python tools/test_measured.py
 python tools/test_browser.py
 python tools/test_numeric_browser.py
+python tools/test_worker_recovery.py
 python tools/test_numeric.py
 python tools/test_consumer.py
 ```
@@ -76,6 +77,7 @@ Linux 如缺少浏览器系统依赖，可使用 `python -m playwright install -
 | --- | --- |
 | `tools/crosscheck.py` | 与 scikit-rf 对照频率、参考阻抗、复数值、幅度、相位和 CSV 导出 |
 | `tools/test_measured.py` | 核对固定版本的公开样例及其来源哈希，比较解析结果 |
+| `tools/test_worker_recovery.py` | 注入线程启动、消息发送与超时故障，检查保留输入及重试导出 |
 | `tools/test_browser.py` | 在本地文件模式下检查导入、绘图、导出、错误恢复和异步交互 |
 
 结果与日志保存在 `verification/`。测试数据的构成和来源见 [TEST_DATA.md](TEST_DATA.md)，各阶段运行记录见 [verification/](../verification/)；统一提交包的本次结果见包内 `reports/submission-check.json`。

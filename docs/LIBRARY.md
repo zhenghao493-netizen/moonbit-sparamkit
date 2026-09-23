@@ -28,7 +28,7 @@ members = ["moonbit-sparamkit", "client"]
 name = "example/sparamkit-client"
 
 import {
-  "ttxiangshang/sparamkit@0.1.0-rc.1",
+  "ttxiangshang/sparamkit@0.1.0-rc.2",
 }
 ```
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-rc.2
+
+- Recover from worker startup, message and timeout failures without reloading the workbench.
+- Release failed worker URLs and pending deadlines; ignore delayed errors from retired workers.
+- Add eight fault-injection scenarios to browser, platform and submission checks.
+- Keep the MoonBit core and its 104 tests unchanged.
+
 ## 0.1.0-rc.1
 
 - Assemble a single acceptance bundle with the offline workbench, rebuildable source, feature checklist, current reports and screenshots.
