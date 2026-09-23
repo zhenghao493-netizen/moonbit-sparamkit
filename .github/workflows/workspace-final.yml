@@ -1,0 +1,69 @@
+name: Workspace final verification
+on:
+  push:
+    branches: [test/workspace-final-20260923]
+    paths: [.github/workflows/workspace-final.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-dependency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the independent reference package for the offline workspace
+        run: |
+          mkdir -p reference-wheel
+          python -m pip download --no-deps --only-binary=:all: scikit-rf==1.8.0 -d reference-wheel
+          cd reference-wheel
+          sha256sum *.whl > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workspace-reference-wheel
+          path: reference-wheel/
+          retention-days: 7
+  verify-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 0b7b5e23dc533154de311c4e70944ff6110f8cb7
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the documented verification environment
+        run: |
+          set -euo pipefail
+          curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Execute the frozen release acceptance suite
+        run: python tools/prepare_submission.py
+      - name: Retain the newly tested submission
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-final-submission
+          path: _build/submission/*-submission.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Retain current status and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-final-evidence
+          path: |
+            _build/submission/submission-check.json
+            _build/submission/failed-step.log
+            verification/*.json
+            verification/*.log
+          retention-days: 90
