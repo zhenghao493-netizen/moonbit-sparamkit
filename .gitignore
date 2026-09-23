@@ -21,3 +21,4 @@ verification/numeric-browser-tests.json
 verification/file-fault-tests.json
 verification/distribution-tests.json
 verification/worker-tests.json
+verification/documentation-tests.json

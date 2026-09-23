@@ -15,7 +15,7 @@
 | 全量 CSV / JSON 导出 | `export.mbt`、`report.mbt` | 20,000 个双端口频点导出，CSV 共 80,000 行参数数据 |
 | 离线工作台、文件 / 拖放 / 文本输入、曲线和分页表格 | `bridge/`、`web/` | `tools/test_browser.py`；逐点读数和频率轴切换 |
 | 文件 CLI 与可复用 MoonBit 库 | `tools/cli.cjs`、根包公开 API | `tools/test_cli.py`、`tools/test_file_faults.py`、`tools/test_consumer.py` |
-| 测试、README 示例和可重建交付 | `tools/`、`docs/` | `tools/prepare_submission.py`；从源码包解压后重建 |
+| 测试、README 示例和可重建交付 | `tools/`、`docs/` | `tools/prepare_submission.py`；原样编译文档示例；从源码包解压后重建 |
 | 公开开发记录、参考说明、许可证 | Git 提交 / PR、`docs/REFERENCES.md`、`LICENSE` | 仓库提交记录、来源文档与 MIT 许可证 |
 
 表中的源码路径以仓库根目录为起点。对应申报时的 54 个核心测试，当前已有 104 个测试；同一套用例分别在 JS 和 wasm-gc 执行。具体结果使用提交包内本次运行的报告，而非仅依据表中列出的测试文件。
@@ -34,6 +34,7 @@
 
 `tools/prepare_submission.py` 通过全部检查后生成统一提交包：
 
+- `index.html`：离线评审首页，串联工作台、演示路线、源码与本次报告。
 - `workbench/`：离线页面、CLI、合成样例和运行包校验清单。
 - `source/`：与本次测试一致、可独立重建的源码和项目文档。
 - `reports/`：本次执行的 JSON 报告、命令日志和界面截图。
