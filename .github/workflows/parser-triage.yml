@@ -43,7 +43,15 @@ jobs:
           git diff --exit-code
           cd ..
           mkdir -p dist
-          cp upstream/_build/js/release/build/parsercheck_probe/parsercheck_probe.js dist/probe.cjs
+          find upstream/_build -type f -name '*.js' | tee reports/build-paths.log
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          paths = list(Path('upstream/_build').rglob('parsercheck_probe.js'))
+          if len(paths) != 1:
+              raise RuntimeError(f'Expected exactly one freshly built probe, got {paths}')
+          shutil.copyfile(paths[0], 'dist/probe.cjs')
+          PY
           cp tools/probe.cjs dist/driver.cjs
           cp fixtures/pilot.json dist/pilot.json
           cp reports/toolchain.log dist/toolchain.log
