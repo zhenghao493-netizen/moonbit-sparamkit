@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-dev.9` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-rc.1` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md)
 
 ## 功能
 
@@ -20,6 +20,8 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 - **完整导出**：输出全部频点和参数的 CSV / JSON；浏览器与 CLI 使用同一套 MoonBit 核心。
 
 ## 快速体验
+
+评审和完整试用可在 [验收包构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/submission.yml) 下载成功运行的 `sparamkit-submission` 附件。解压其中的提交包，打开 `workbench/index.html`；源码、演示说明和本次测试报告也包含在同一个包中。
 
 在 [工具构建页面](https://github.com/zhenghao493-netizen/moonbit-sparamkit/actions/workflows/web.yml) 选择一次成功运行，从 **Artifacts** 下载 `sparamkit-tool`。解压后，用桌面浏览器打开 `index.html`。
 
@@ -126,6 +128,18 @@ Windows 下用 `./tools/verify.ps1` 运行核心检查，其余 Python / Node �
 核心库包含 104 个测试（含 10 个公开 API 黑盒测试），分别运行在 JS 和 wasm-gc 上。CI 还覆盖 Decimal 高精度边界对照、scikit-rf 数值对照、公开文件样例、文件读写故障、Windows / Linux 离线交互和源码包重建。复现方法见 [演示与验收指南](docs/ACCEPTANCE.md)，环境与结果见 [测试记录](verification/)。
 
 解析、数值转换、诊断和数据导出在 MoonBit 中实现；`bridge/` 提供调用入口，`web/` 负责界面，`tools/` 包含 CLI 包装、构建和测试脚本。Python 与 scikit-rf 用于构建及测试。
+
+## 准备验收包
+
+安装 [验收指南](docs/ACCEPTANCE.md) 中的测试依赖后运行：
+
+```bash
+python tools/prepare_submission.py
+```
+
+脚本依次完成核心测试、库接入、数值对照、浏览器操作和源码包重建，全部通过后在 `_build/submission/` 生成 ZIP。包内附有版本、构建标识、日志和文件校验清单。Git 工作区需先提交改动；从源码 ZIP 重建时使用本地源码标识。
+
+重新构建工作台前，请把自行导出的结果移出 `dist/`；构建器会拒绝夹带无关文件，但不会删除它们。
 
 ## 项目与许可
 

@@ -1,0 +1,46 @@
+name: Prepare competition submission
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  submission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install MoonBit and test dependencies
+        run: |
+          set -euo pipefail
+          curl -fsSL --connect-timeout 15 --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          python -m pip install scikit-rf==1.8.0 numpy==2.2.6 scipy==1.15.3 playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Test and assemble one versioned submission
+        run: python tools/prepare_submission.py
+      - name: Upload verified submission bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: sparamkit-submission
+          path: _build/submission/*-submission.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Keep acceptance status and failing command log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: submission-check
+          path: |
+            _build/submission/submission-check.json
+            _build/submission/failed-step.log
+          retention-days: 90
