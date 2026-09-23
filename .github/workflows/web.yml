@@ -58,6 +58,7 @@ jobs:
           set -euo pipefail
           python tools/test_browser.py | tee verification/browser.log
           python tools/test_numeric_browser.py | tee verification/numeric-browser.log
+          python tools/test_worker_recovery.py | tee verification/worker-recovery.log
       - name: Upload runnable offline tool
         uses: actions/upload-artifact@v4
         with:

@@ -20,7 +20,7 @@ REPORTS = (
     'host-tests.json', 'cli-tests.json', 'file-fault-tests.json',
     'distribution-tests.json', 'consumer-tests.json', 'numeric-tests.json',
     'crosscheck.json', 'measured-files.json', 'browser-tests.json',
-    'numeric-browser-tests.json', 'package-check.json',
+    'numeric-browser-tests.json', 'worker-tests.json', 'package-check.json',
 )
 
 
@@ -54,7 +54,7 @@ def verified_reports() -> dict:
         if report.get('status') != 'passed':
             raise RuntimeError('Verification did not pass: ' + name)
         data[name] = report
-    for name in ('browser-tests.json', 'numeric-browser-tests.json'):
+    for name in ('browser-tests.json', 'numeric-browser-tests.json', 'worker-tests.json'):
         if data[name].get('mode') != 'file':
             raise RuntimeError('Submission requires actual file-mode browser checks: ' + name)
     return data
@@ -117,6 +117,7 @@ def main() -> int:
                 ('consumer', 'test_consumer.py'), ('numeric', 'test_numeric.py'),
                 ('scikit-rf', 'crosscheck.py'), ('public-files', 'test_measured.py'),
                 ('browser', 'test_browser.py'), ('numeric-browser', 'test_numeric_browser.py'),
+                ('worker-recovery', 'test_worker_recovery.py'),
                 ('source-package', 'check_package.py'),
             ):
                 run(label, [sys.executable, 'tools/' + script])

@@ -9,7 +9,7 @@ SParamKit 是一个用 MoonBit 编写的射频网络参数工具，支持 `.s1p`
 
 项目包含可复用的 MoonBit 核心库、离线浏览器工作台和命令行工具，适用于射频实验教学、文件检查和本地数据分析。
 
-版本：`0.1.0-rc.1` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md)
+版本：`0.1.0-rc.2` · [使用指南](docs/GETTING_STARTED.md) · [演示与验收](docs/ACCEPTANCE.md) · [申报功能对应表](docs/SUBMISSION.md) · [格式支持](docs/COMPATIBILITY.md)
 
 ## 功能
 

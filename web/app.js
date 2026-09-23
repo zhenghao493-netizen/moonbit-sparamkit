@@ -4,7 +4,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const demos = JSON.parse($('demo-data').textContent);
   const limit = 2 * 1024 * 1024, pageSize = 8;
-  let worker, serial = 0, generation = 0, report = null, page = 0, sourceName = 'input';
+  let worker = null, serial = 0, generation = 0, report = null, page = 0, sourceName = 'input';
   let accepted = null, diagnostic = null, plotData = [], selectedIndex = 0;
   const plotGeometry = new Map();
   const pending = new Map();
@@ -14,6 +14,17 @@
     $('status-detail').textContent = detail;
     $('status').querySelector('.status-symbol').textContent = state === 'error' ? '!' : state === 'dirty' ? '·' : '✓';
   }
+  function discardWorker(current, error) {
+    // A delayed event from a retired worker must not cancel its replacement.
+    if (worker !== current) return;
+    worker = null;
+    current.onmessage = current.onerror = null;
+    current.terminate();
+    for (const item of pending.values()) {
+      clearTimeout(item.timer); item.reject(error);
+    }
+    pending.clear();
+  }
   function startWorker() {
     const code = $('moonbit-core').textContent + `\nself.onmessage = ({data}) => {
       try {
@@ -22,29 +33,37 @@
       } catch(error) { self.postMessage({id:data.id,error:String(error.message || error)}); }
     };`;
     const url = URL.createObjectURL(new Blob([code], {type:'text/javascript'}));
-    worker = new Worker(url);
-    URL.revokeObjectURL(url);
-    worker.onmessage = ({data}) => {
+    let current;
+    try { current = new Worker(url); }
+    finally { URL.revokeObjectURL(url); }
+    worker = current;
+    current.onmessage = ({data}) => {
+      if (worker !== current) return;
       const item = pending.get(data.id);
       if (!item) return;
       pending.delete(data.id); clearTimeout(item.timer);
       data.error ? item.reject(new Error(data.error)) : item.resolve(data.result);
     };
-    worker.onerror = event => {
+    current.onerror = event => {
       event.preventDefault();
-      for (const item of pending.values()) { clearTimeout(item.timer); item.reject(new Error('MoonBit 工作线程启动或执行失败，请重新打开页面。')); }
-      pending.clear();
+      discardWorker(current, new Error('工作线程出错，请重新解析。输入内容已保留。'));
     };
+    current.addEventListener('messageerror', () => {
+      discardWorker(current, new Error('无法读取工作线程的响应，请重新解析。'));
+    });
+    return current;
   }
   function request(op, text, ports) {
     return new Promise((resolve, reject) => {
+      // Create lazily: a failed start or timeout is retried by the next action.
+      const current = worker || startWorker();
       const id = ++serial;
       const timer = setTimeout(() => {
-        for (const item of pending.values()) { clearTimeout(item.timer); item.reject(new Error('计算超时，工作线程已重置。请缩小输入后重试。')); }
-        pending.clear(); worker.terminate(); startWorker();
+        discardWorker(current, new Error('计算超时，请缩小输入后重新解析。'));
       }, 15000);
       pending.set(id, {resolve, reject, timer});
-      worker.postMessage({id,op,text,ports});
+      try { current.postMessage({id,op,text,ports}); }
+      catch (error) { discardWorker(current, error); }
     });
   }
   function svgNode(name, attrs, text) {
@@ -324,5 +343,5 @@
   };
   let resizeFrame;
   window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(render);});
-  try { startWorker(); loadDemo('two'); } catch(error) { invalidate(); status('无法启动','需要支持 Web Worker 的现代浏览器：'+error.message,'error'); }
+  try { loadDemo('two'); } catch(error) { invalidate(); status('无法启动','需要支持 Web Worker 的现代浏览器：'+error.message,'error'); }
 })();
