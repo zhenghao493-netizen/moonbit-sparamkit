@@ -1,32 +1,25 @@
-# 改题依据
+# 选题与维护需求
 
-核对日期：2026-09-23。
+更新日期：2026-09-24。
 
-## 选择：官方解析器一致性回归与修复
+## 当前依据：已确认的上游问题
 
-需求来自 [Community-Tasks #142](https://github.com/moonbit-community/Community-Tasks/issues/142)，由 Yoorkin 于 2025-12-09 提出，核查时为 open、无 assignee、无评论。任务要求参考官方 parser 的贡献指南，提供问题报告、回归测试或修复 PR。
+本项目围绕 `moonbitlang/parser` 的一致性维护开展工作。上游维护者 Yoorkin 已在 [#188](https://github.com/moonbitlang/parser/issues/188#issuecomment-5809735774) 确认负数常量模式的位置问题，并欢迎提交修复 PR。维护者同时说明 OCaml 参考实现也存在该问题，将先处理参考实现。
 
-上游 [moonbitlang/parser](https://github.com/moonbitlang/parser) 提供 MoonBit 自身的 lexer / AST / parser 能力。仓库仍在维护，本次锁定提交 `a01fd77e599c12cf9a2182df3456990e74f53ced`（模块 0.4.0）。新增工作以该基线之上的测试与补丁呈现，不重新发布完整上游作为原创成果。
+本期优先交付 #188 的小范围补丁与回归。另一项分组类型约束位置问题 [#189](https://github.com/moonbitlang/parser/issues/189) 仍待确认，保持独立，不夹带进已确认问题的提交。
 
-上游已有 AST 差分与快照框架，因此复用这些机制，重点补有实际价值的用例、最小复现和缺陷修复。贡献指南以有效、非实验语法的参考 AST 一致性为准；工具链版本差异和错误恢复策略差异须单独分析。
+两项问题均有修复前失败、修复后通过的记录。完整补丁位于 `review/`；当前基线由 `upstream.review.lock.json` 固定，上游已有源码和测试作为基础，不计为本期原创成果。
 
-## 已排除的方向
+## 历史任务信息的更正
 
-- 覆盖率展示：社区任务 #82 已有人接手并有阶段产出；当前 `moonbitlang/coverage` 已提供多种报告和上传能力。不再写一套同功能工具。
-- 通用静态站点生成：任务 #87 有公开需求，但 Lattice 等 MoonBit 实现已有页面索引、双向链接、Schema、模板和预览功能；不再把通用 SSG 当成空白。
-- 进程与网络包装：现有 `moonbitlang/async` 已覆盖相关基础能力，不凭旧任务标题判断未实现。
+最初从 Community-Tasks #142 找到解析器维护方向，曾依据其 open 状态将其理解为仍在进行的社区任务。维护者于本次核查时[明确回复](https://github.com/moonbit-community/Community-Tasks/issues/142#issuecomment-5809898434)：该仓库属于原 J139 小队的任务列表，相关活动已经结束；仍欢迎按各仓库贡献指南向开源项目贡献。
 
-参考：
-- https://github.com/moonbit-community/Community-Tasks/issues/82
-- https://github.com/moonbitlang/coverage
-- https://github.com/moonbit-community/Community-Tasks/issues/87
-- https://github.com/0x4m4d3u5/lattice
-- https://github.com/moonbitlang/awesome-moonbit
+因此，#142 只保留为历史线索，不再写成当前官方征集、九月赛事任务或已获得任务分配。open 状态不能单独证明任务所属活动仍在进行。新的项目说明使用具体缺陷及维护者确认作为需求依据。
 
-## 申报与实施顺序
+## 工作范围与验收口径
 
-先提交需求来源、维护型项目范围与本期新增标准，确认九月赛事接受此改题；目前只做固定基线和小规模差分试验。没有取得任务分配、主办方批准或上游合并结果。
+工作围绕最小复现、独立 MoonBit 回归、修复补丁和上游审阅，不重新编写生产解析器。修复的数目、补充语料数量、维护者确认、PR 提交及合并分别记录。
 
-验收产出按“新增样例 → 差异定位 → 最小复现 → 回归 / 修复 PR → 未修改参考预期下测试通过”组织。不能只增加测试数量，不能通过更新全部快照掩盖差异，也不预先承诺能发现多少个缺陷。
+上游的贡献认可与比赛方的报名资格审核是两项独立事项。当前不宣称已通过改题审核，也不把测试通过写成上游已合并。状态入口见 [UPSTREAM_STATUS.md](UPSTREAM_STATUS.md)。
 
-基线和新试验已经执行，分别见 [BASELINE.md](../verification/BASELINE.md) 与 [PILOT.md](../verification/PILOT.md)。首轮发现的是待确认的调用表达式 AST 导出结构差异，不将其直接认定为多个解析器缺陷。
+早期版本的基线、AST 导出结构差异和验证日志作为历史记录保留；`ApplyAttr::NoAttr` 差异不在两份位置补丁中，也未被删除字段或重写快照来消除。

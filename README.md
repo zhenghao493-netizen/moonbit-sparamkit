@@ -1,25 +1,23 @@
 # MoonBit ParserCheck
 
-为 `moonbitlang/parser` 补充语法回归用例、最小复现和修复补丁。项目复用官方解析器与测试框架，对照 Handrolled、MoonYacc、CST 转换和工具链参考 AST，定位解析结果及源码位置的不一致。
+为 `moonbitlang/parser` 补充语法回归用例、最小复现和修复补丁。项目对照 Handrolled、MoonYacc、CST 转换与工具链参考结果，定位语法树内容和源码位置的不一致。
 
-需求来源：[Community-Tasks #142：moonbitlang/parser 测试和修复](https://github.com/moonbit-community/Community-Tasks/issues/142)。
+上游维护者已确认 [#188：负数模式的位置漏掉负号](https://github.com/moonbitlang/parser/issues/188#issuecomment-5809735774)，并欢迎提交修复 PR。当前优先推进这一项的独立提交。
 
-[项目说明](docs/PROPOSAL.md) · [审阅与复现](docs/REVIEW.md) · [组合回归](docs/LOCATION_MATRIX.md) · [选题依据](docs/TOPIC.md)
+[项目说明](docs/PROPOSAL.md) · [上游状态](docs/UPSTREAM_STATUS.md) · [审阅与复现](docs/REVIEW.md) · [组合回归](docs/LOCATION_MATRIX.md)
 
 ## 当前贡献
 
-| 问题 | 候选修复 | 新增回归 | 上游讨论 |
+| 问题 | 修改范围 | 回归用例 | 上游状态 |
 | --- | --- | --- | --- |
-| 负数常量模式的位置漏掉负号 | 手写解析器与 CST 转换保留完整符号范围 | 7 个用例 | [#188](https://github.com/moonbitlang/parser/issues/188) |
-| 多层括号扩大类型约束模式的位置 | CST 转换保留内层约束的位置 | 10 个用例 | [#189](https://github.com/moonbitlang/parser/issues/189) |
+| [#188](https://github.com/moonbitlang/parser/issues/188)：负数常量模式位置漏掉负号 | 手写解析器与 CST 转换 | 7 个 | 已确认缺陷，准备独立 PR |
+| [#189](https://github.com/moonbitlang/parser/issues/189)：多层括号扩大类型约束位置 | CST 转换 | 10 个 | 候选补丁，待确认 |
 
-两份补丁已适配上游 `c1174741` 的 CST 模块拆分。分别验证原版失败、单独修复后通过，再共同运行四个后端的完整测试。当前等待维护者确认位置约定，尚未合并到官方仓库。
+完整提交补丁位于 [review/](review/)，每份包含对应实现和测试。两项均已验证修复前失败、修复后通过，联合补丁通过四后端完整测试。当前修复尚未合并到官方仓库。
 
-完整提交补丁位于 [review/](review/)，每份都包含实现和测试，可以分别通过 `git am` 应用。自动化流程还会重新应用导出的补丁，核对其与受测源码一致。
+## 验证已确认的修复
 
-## 运行当前版本验证
-
-准备 MoonBit 工具链、Node.js、Python 3.11+；native 测试还需要本地 C 编译环境。本次工具链为 moonc `v0.10.14+7d59c7ec9`，上游版本由 `upstream.review.lock.json` 固定。
+准备 MoonBit、Node.js、Python 3.11+ 和 native 测试使用的 C 编译环境。当前审阅基线及工具链由 `upstream.review.lock.json` 固定。
 
 ```bash
 git clone --branch reselect/parser-conformance \
@@ -27,38 +25,36 @@ git clone --branch reselect/parser-conformance \
 cd parsercheck
 git clone https://github.com/moonbitlang/parser.git upstream
 git -C upstream checkout c1174741f8fd5c9b827af7b9148884413e5ebfdd
-python tools/prepare_review.py upstream
+python tools/verify_issue188.py upstream
 ```
 
-脚本在临时克隆中执行，不修改传入的上游工作副本。报告保存在独立的 `reports/current-review/run-*/` 目录；`ready/` 包含完整提交补丁。具体步骤见 [审阅指南](docs/REVIEW.md)。
+这条流程只应用 #188 的完整提交补丁，检查原版断言、修复后结果及四个后端的完整套件，不包含 #189。脚本使用临时克隆，传入的上游工作副本保持不变；结果位于 `reports/issue188/run-*/`。每次结果以该目录内的 `result.json` 和命令日志为准。
 
-两份补丁新增的是 17 个回归用例；完整上游套件数量不计入本期新增成果。源码切片和完整带位置 AST 都参与判断，不以更新参考快照消除失败。
+需要复现两份独立补丁与联合套件时，使用 `python tools/prepare_review.py upstream`，见 [审阅指南](docs/REVIEW.md)。
 
 ## 组合语法与文本布局
 
-新增组合检查覆盖 240 份输入，将负数与类型约束放进不同上下文，并加入中文、emoji、LF / CRLF 和制表符。相同输入分别运行原版、单项修复和联合修复；两项修复共同应用后，三种入口的位置、源码切片和带位置 AST 全部一致。
+240 份定向输入覆盖字面量、模式上下文、中文与 emoji、LF / CRLF 和制表符。原版、两项单独修复和联合修复使用相同输入；联合修复后，三个入口的位置、源码切片和带位置 AST 全部一致。
 
 ```bash
 python tools/test_location_cases.py
 python tools/test_location_matrix.py upstream
 ```
 
-这套补充检查使用 JS 后端，包含 4 个 MoonBit 探针取片测试和 5 个 Python 辅助测试。240 份语料与原有 17 个上游回归用例分开统计。实际结果、失败排查和原始输出入口见 [组合回归记录](verification/LOCATION_MATRIX.md)。
+组合检查使用 JS 后端，并附 4 个 MoonBit 取片测试、5 个 Python 辅助测试。240 份语料与 17 个上游回归用例分开统计。详细结果见 [组合回归记录](verification/LOCATION_MATRIX.md)。
 
-## 历史记录与差异筛查
+## 历史记录
 
-原始上游基线 `a01fd77e` 保留在 `upstream.lock.json`。旧补丁、`tools/verify_patch.py` 和 `tools/verify_grouped_patch.py` 继续用于复现当时的结果，见 [负数模式记录](verification/NEGATIVE_PATTERNS.md) 和 [分组模式记录](verification/GROUPED_CONSTRAINTS.md)。新旧补丁不要混用。
+原基线 `a01fd77e` 保留在 `upstream.lock.json`；旧补丁和对应验证脚本用于复现当时结果。当前补丁适配 `c1174741` 的 CST 模块拆分，新旧文件不要混用。
 
-`probe/` 用 MoonBit 调用三种解析入口；`tools/probe.cjs` 提供 JSON 进出通道。探针可以保留或隐藏源码位置，将 AST 内容差异与位置差异分开检查。
+首轮 16 份输入及 `ApplyAttr::NoAttr` 导出结构差异见 [PILOT.md](verification/PILOT.md)。位置修复没有删除这部分差异。`mooninfo` 可检查语法有效性，当前空位置字段不充当位置判据。
 
-首轮 16 份输入的参考对照见 [PILOT.md](verification/PILOT.md)。其中的 `ApplyAttr::NoAttr` 导出结构差异单独跟踪；本轮位置修复没有修改这部分输出。
-
-贡献流程遵循上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)：有效语法、最小复现、问题确认、针对性回归和小范围修复。
+Community-Tasks #142 是早期选题线索，其所属活动已经结束。当前需求依据为已确认的具体上游问题，说明见 [选题记录](docs/TOPIC.md)。
 
 ## 开发与许可
 
-新增修复和回归逻辑使用 MoonBit；Python 负责执行测试及整理报告。上游现有源码和测试作为基线，本期新增工作按补丁与测试文件记录。
+修复、回归和探针逻辑使用 MoonBit；Python / Node.js 负责执行与报告。已有上游代码和测试作为基线，本期新增成果按补丁、用例及实际提交记录区分。
 
-本项目位于 `reselect/parser-conformance` 分支，原 SParamKit 主分支与发布版本保留。改题申报信息见 [项目说明](docs/PROPOSAL.md)。
+本项目位于 `reselect/parser-conformance` 分支，原 SParamKit 主分支和发布文件保留。贡献遵循上游 [CONTRIBUTING.md](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)。
 
-采用 [Apache-2.0](LICENSE)。上游作者和版权说明保持原样。开发中使用 AI 辅助测试设计、问题定位和文档整理。
+采用 [Apache-2.0](LICENSE)，保留上游作者和版权说明。开发使用 AI 辅助测试设计、定位及文档整理。
