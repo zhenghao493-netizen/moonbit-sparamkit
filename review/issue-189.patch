@@ -1,0 +1,178 @@
+From 81cded3fca2db84d66695d2b2cdae8e0884e08d8 Mon Sep 17 00:00:00 2001
+From: zhenghao493-netizen
+ <294042204+zhenghao493-netizen@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 03:38:50 +0000
+Subject: [PATCH] fix: preserve inner constraint locations through redundant
+ grouping
+
+Refs #189
+---
+ .../grouped_constraint_loc_test.mbt           | 129 ++++++++++++++++++
+ untyped_cst/internal/lower/pattern.mbt        |  14 +-
+ 2 files changed, 142 insertions(+), 1 deletion(-)
+ create mode 100644 test/manual_test/grouped_constraint_loc_test.mbt
+
+diff --git a/test/manual_test/grouped_constraint_loc_test.mbt b/test/manual_test/grouped_constraint_loc_test.mbt
+new file mode 100644
+index 0000000..97504a7
+--- /dev/null
++++ b/test/manual_test/grouped_constraint_loc_test.mbt
+@@ -0,0 +1,129 @@
++// SPDX-License-Identifier: Apache-2.0
++
++///|
++struct GroupedConstraintFragments {
++  source : String
++  fragments : Array[String]
++}
++
++///|
++extend GroupedConstraintFragments with @syntax.IterVisitor::{base, visit_Impl}
++
++///|
++impl @syntax.IterVisitor for GroupedConstraintFragments with fn visit_Pattern_Constraint(
++  self,
++  pat~,
++  ty~,
++  loc~,
++) {
++  self.fragments.push(self.source[loc.start.cnum:loc.end.cnum].to_owned())
++  @syntax.IterVisitor::visit_Pattern_Constraint(self.base(), pat~, ty~, loc~)
++}
++
++///|
++fn grouped_constraint_ast(
++  source : String,
++  impls : @syntax.Impls,
++  expected : Array[String],
++) -> Json raise Error {
++  let visitor : GroupedConstraintFragments = { source, fragments: [], }
++  for impl_ in impls {
++    visitor.visit_Impl(impl_)
++  }
++  @test.assert_eq(visitor.fragments, expected)
++  @basic.show_loc.protect(String, fn() {
++    ToJson::to_json(impls.map(impl_ => impl_.json_repr()))
++  })
++}
++
++///|
++fn assert_grouped_constraint_locations(
++  source : String,
++  expected : Array[String],
++) -> Unit raise Error {
++  let (hand, hand_reports) = @parser.parse_string(source, parser=Handrolled)
++  let (yacc, yacc_reports) = @parser.parse_string(source, parser=MoonYacc)
++  let cst = @untyped_cst.parse_structure(source)
++  let (lowered, lower_reports) = cst.to_impls()
++  @test.assert_eq(hand_reports.length(), 0)
++  @test.assert_eq(yacc_reports.length(), 0)
++  @test.assert_eq(cst.diagnostics_view().length(), 0)
++  @test.assert_eq(lower_reports.length(), 0)
++  let hand_json = grouped_constraint_ast(source, hand, expected)
++  let yacc_json = grouped_constraint_ast(source, yacc, expected)
++  let cst_json = grouped_constraint_ast(source, lowered, expected)
++  @test.assert_eq(hand_json, yacc_json)
++  @test.assert_eq(hand_json, cst_json)
++}
++
++///|
++test "direct constraint includes its own parentheses" {
++  assert_grouped_constraint_locations("fn f(x) { let (x : Int) = x; x }", [
++    "(x : Int)",
++  ])
++}
++
++///|
++test "grouped constraint ignores an extra pair of parentheses" {
++  assert_grouped_constraint_locations("fn f(x) { let ((x : Int)) = x; x }", [
++    "(x : Int)",
++  ])
++}
++
++///|
++test "triply grouped constraint preserves the original span" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { match x { (((x : Int))) => 1; _ => 0 } }",
++    ["(x : Int)"],
++  )
++}
++
++///|
++test "grouping an annotated tuple preserves the constraint span" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { let (((a, b) : (Int, Int))) = x; a }",
++    ["((a, b) : (Int, Int))"],
++  )
++}
++
++///|
++test "grouped constraint inside a constructor preserves its span" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { match x { Some(((x : Int))) => x; _ => 0 } }",
++    ["(x : Int)"],
++  )
++}
++
++///|
++test "grouped constraint inside an array preserves its span" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { match x { [((x : Int))] => x; _ => 0 } }",
++    ["(x : Int)"],
++  )
++}
++
++///|
++test "nested annotations retain each annotation's own parentheses" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { let (((x : Int) : Int)) = x; x }",
++    ["((x : Int) : Int)", "(x : Int)"],
++  )
++}
++
++///|
++test "multiline grouping leaves the inner constraint span unchanged" {
++  assert_grouped_constraint_locations(
++    "fn f(x) { match x { (\n(x : Int)\n) => x; _ => 0 } }",
++    ["(x : Int)"],
++  )
++}
++
++///|
++test "ordinary tuple locations remain unchanged" {
++  assert_grouped_constraint_locations("fn f(x) { let ((a, b)) = x; a }", [])
++}
++
++///|
++test "ordinary grouped variable locations remain unchanged" {
++  assert_grouped_constraint_locations("fn f(x) { let (((y))) = x; y }", [])
++}
+diff --git a/untyped_cst/internal/lower/pattern.mbt b/untyped_cst/internal/lower/pattern.mbt
+index eb374bf..8d56d25 100644
+--- a/untyped_cst/internal/lower/pattern.mbt
++++ b/untyped_cst/internal/lower/pattern.mbt
+@@ -368,8 +368,20 @@ fn lower_pattern_items(node : CstNode) -> Array[@syntax.Pattern] {
+ fn lower_tuple_pattern(node : CstNode) -> @syntax.Pattern {
+   let items = lower_pattern_items(node)
+   if node.has_child_kind(fn(kind) { kind is Pattern_Group }) {
++    // Only the parentheses introducing the annotation belong to its location.
++    // Outer grouping preserves the span of the already lowered constraint.
++    let direct_constraint = node
++      .first_child_with_label("body")
++      .map(body => {
++        body
++        .children_with_label("item")
++        .get(0)
++        .map(item => item.kind is Pattern_Constraint)
++        .unwrap_or(false)
++      })
++      .unwrap_or(false)
+     match items.get(0).unwrap_or(@syntax.Pattern::Any(loc=node.loc)) {
+-      @syntax.Pattern::Constraint(pat~, ty~, loc=_) =>
++      @syntax.Pattern::Constraint(pat~, ty~, loc=_) if direct_constraint =>
+         @syntax.Pattern::Constraint(pat~, ty~, loc=node.loc)
+       item => item
+     }
+-- 
+2.55.0
+

@@ -4,7 +4,7 @@
 
 需求来源：[Community-Tasks #142：moonbitlang/parser 测试和修复](https://github.com/moonbit-community/Community-Tasks/issues/142)。
 
-[项目说明](docs/PROPOSAL.md) · [选题依据](docs/TOPIC.md) · [基线记录](verification/BASELINE.md)
+[项目说明](docs/PROPOSAL.md) · [审阅与复现](docs/REVIEW.md) · [本轮验证](verification/CURRENT_REVIEW.md) · [选题依据](docs/TOPIC.md)
 
 ## 当前贡献
 
@@ -13,39 +13,36 @@
 | 负数常量模式的位置漏掉负号 | 手写解析器与 CST 转换保留完整符号范围 | 7 个用例 | [#188](https://github.com/moonbitlang/parser/issues/188) |
 | 多层括号扩大类型约束模式的位置 | CST 转换保留内层约束的位置 | 10 个用例 | [#189](https://github.com/moonbitlang/parser/issues/189) |
 
-两份补丁均已验证修复前失败、修复后通过，并共同通过四个后端的完整上游测试。当前等待维护者确认位置约定，尚未合并到官方仓库。
+两份补丁已适配上游 `c1174741` 的 CST 模块拆分。分别验证原版失败、单独修复后通过，再共同运行四个后端的完整测试。当前等待维护者确认位置约定，尚未合并到官方仓库。
 
-第一份补丁处理 `-1` 被定位成 `1` 的问题，见 [补丁](patches/0001-negative-pattern-locations.patch)、[测试](regressions/negative_pattern_loc_test.mbt) 和 [记录](verification/NEGATIVE_PATTERNS.md)。
+完整提交补丁位于 [review/](review/)，每份都包含实现和测试，可以分别通过 `git am` 应用。自动化流程还会重新应用导出的补丁，核对其与受测源码一致。
 
-第二份补丁处理 `((x : Int))` 中约束位置被多余括号扩大的问题，见 [补丁](patches/0002-grouped-constraint-locations.patch)、[测试](regressions/grouped_constraint_loc_test.mbt) 和 [联合回归记录](verification/GROUPED_CONSTRAINTS.md)。
+## 运行当前版本验证
 
-## 运行回归验证
-
-准备 MoonBit 工具链、Node.js、Python 3.11+；native 测试还需要本地 C 编译环境。当前验证环境为 moonc `v0.10.14+7d59c7ec9`，上游提交由 `upstream.lock.json` 固定。
+准备 MoonBit 工具链、Node.js、Python 3.11+；native 测试还需要本地 C 编译环境。本次工具链为 moonc `v0.10.14+7d59c7ec9`，上游版本由 `upstream.review.lock.json` 固定。
 
 ```bash
 git clone --branch reselect/parser-conformance \
   https://github.com/zhenghao493-netizen/moonbit-sparamkit.git parsercheck
 cd parsercheck
 git clone https://github.com/moonbitlang/parser.git upstream
-git -C upstream checkout a01fd77e599c12cf9a2182df3456990e74f53ced
-(cd upstream && moon update)
-python tools/verify_grouped_patch.py upstream
+git -C upstream checkout c1174741f8fd5c9b827af7b9148884413e5ebfdd
+python tools/prepare_review.py upstream
 ```
 
-脚本先编译并运行分组约束的新测试，确认原版有 7 项断言失败、3 项对照通过；只应用分组补丁后，同一套 10 个测试通过。随后加入负数模式补丁及其 7 个用例，再执行 `moon test --target all`。日志和 JSON 结果保存在 `reports/grouped-constraints/`。
+脚本在临时克隆中执行，不修改传入的上游工作副本。报告保存在独立的 `reports/current-review/run-*/` 目录；`ready/` 包含完整提交补丁。具体步骤见 [审阅指南](docs/REVIEW.md)。
 
-只检查第一份补丁时，在另一个干净上游副本中运行 `python tools/verify_patch.py <目录>`。仅核对原有基线使用 `python tools/baseline.py <目录>`。这些命令不要共用已经应用补丁的工作副本。
+两份补丁新增的是 17 个回归用例；完整上游套件数量不计入本期新增成果。源码切片和完整带位置 AST 都参与判断，不以更新参考快照消除失败。
 
-两份补丁新增的是 17 个回归用例；完整上游套件的数量不计入本期新增成果。脚本保留受测改动和失败输出，不自动删除源码或更新快照。
+## 历史记录与差异筛查
 
-## 差异筛查
+原始上游基线 `a01fd77e` 保留在 `upstream.lock.json`。旧补丁、`tools/verify_patch.py` 和 `tools/verify_grouped_patch.py` 继续用于复现当时的结果，见 [负数模式记录](verification/NEGATIVE_PATTERNS.md) 和 [分组模式记录](verification/GROUPED_CONSTRAINTS.md)。新旧补丁不要混用。
 
-`probe/` 用 MoonBit 调用三种解析入口；`tools/probe.cjs` 提供 JSON 进出通道。探针可同时保留或隐藏源码位置，便于将 AST 内容差异与位置差异分开检查。探针构建见 [工作流](.github/workflows/parser-triage.yml)。
+`probe/` 用 MoonBit 调用三种解析入口；`tools/probe.cjs` 提供 JSON 进出通道。探针可以保留或隐藏源码位置，将 AST 内容差异与位置差异分开检查。
 
-首轮 16 份输入的原始参考对照保存在 [PILOT.md](verification/PILOT.md)。其中的 `ApplyAttr::NoAttr` 导出结构差异单独跟踪。`tools/pilot.py` 发现原始差异时返回非零，与上述定向修复验证分别报告；两份位置补丁均不修改 AST 导出字段。
+首轮 16 份输入的参考对照见 [PILOT.md](verification/PILOT.md)。其中的 `ApplyAttr::NoAttr` 导出结构差异单独跟踪；本轮位置修复没有修改这部分输出。
 
-后续贡献沿用上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)：有效语法、最小复现、问题确认、针对性回归和小范围修复。
+贡献流程遵循上游 [贡献指南](https://github.com/moonbitlang/parser/blob/master/CONTRIBUTING.md)：有效语法、最小复现、问题确认、针对性回归和小范围修复。
 
 ## 开发与许可
 
