@@ -8,7 +8,7 @@ def generate_cases() -> list[dict]:
     literals = (
         ('int', '-1', 'Int', True), ('int64', '-1L', 'Int64', True),
         ('hex', '-0x10', 'Int', True), ('double', '-1.5', 'Double', True),
-        ('float', '-1.5F', 'Float', True), ('exponent', '-1e-3', 'Double', True),
+        ('float', '-1.5F', 'Float', True), ('exponent', '-1.0e-3', 'Double', True),
         ('negative_zero', '-0.0', 'Double', True), ('spaced', '-  1', 'Int', True),
         ('positive_int', '1', 'Int', False), ('positive_double', '1.5', 'Double', False),
     )
