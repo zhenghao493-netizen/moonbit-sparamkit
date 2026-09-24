@@ -4,7 +4,7 @@
 
 需求来源：[Community-Tasks #142：moonbitlang/parser 测试和修复](https://github.com/moonbit-community/Community-Tasks/issues/142)。
 
-[项目说明](docs/PROPOSAL.md) · [审阅与复现](docs/REVIEW.md) · [本轮验证](verification/CURRENT_REVIEW.md) · [选题依据](docs/TOPIC.md)
+[项目说明](docs/PROPOSAL.md) · [审阅与复现](docs/REVIEW.md) · [组合回归](docs/LOCATION_MATRIX.md) · [选题依据](docs/TOPIC.md)
 
 ## 当前贡献
 
@@ -33,6 +33,17 @@ python tools/prepare_review.py upstream
 脚本在临时克隆中执行，不修改传入的上游工作副本。报告保存在独立的 `reports/current-review/run-*/` 目录；`ready/` 包含完整提交补丁。具体步骤见 [审阅指南](docs/REVIEW.md)。
 
 两份补丁新增的是 17 个回归用例；完整上游套件数量不计入本期新增成果。源码切片和完整带位置 AST 都参与判断，不以更新参考快照消除失败。
+
+## 组合语法与文本布局
+
+新增组合检查覆盖 240 份输入，将负数与类型约束放进不同上下文，并加入中文、emoji、LF / CRLF 和制表符。相同输入分别运行原版、单项修复和联合修复；两项修复共同应用后，三种入口的位置、源码切片和带位置 AST 全部一致。
+
+```bash
+python tools/test_location_cases.py
+python tools/test_location_matrix.py upstream
+```
+
+这套补充检查使用 JS 后端，包含 4 个 MoonBit 探针取片测试和 5 个 Python 辅助测试。240 份语料与原有 17 个上游回归用例分开统计。实际结果、失败排查和原始输出入口见 [组合回归记录](verification/LOCATION_MATRIX.md)。
 
 ## 历史记录与差异筛查
 
