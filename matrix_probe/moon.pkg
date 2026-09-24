@@ -1,5 +1,5 @@
 import {
-  "moonbitlang/parser" @parser,
+  "moonbitlang/parser",
   "moonbitlang/parser/syntax",
   "moonbitlang/parser/untyped_cst" @cst,
   "moonbitlang/lexer/basic",
@@ -9,10 +9,10 @@ supported_targets = "js"
 
 pkgtype(kind: "executable")
 
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
 options(
   link: { "js": { "format": "iife" } },
 )
-
-import {
-  "moonbitlang/core/test",
-} for "test"

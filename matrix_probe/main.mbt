@@ -16,11 +16,11 @@ fn make_slices(source : String) -> PatternSlices {
   for ch in source.iter() {
     chars.push(ch)
   }
-  { source: chars, constants: [], constraints: [] }
+  { source: chars, constants: [], constraints: [], }
 }
 
 ///|
-fn PatternSlices::fragment(self, start : Int, end : Int) -> String {
+fn PatternSlices::fragment(self : PatternSlices, start : Int, end : Int) -> String {
   // Parser cnum counts Unicode scalar values, not UTF-16 string code units.
   let mut result = ""
   for i = start; i < end; i = i + 1 {
@@ -65,7 +65,11 @@ fn inspect_patterns(source : String, engine : Int) -> String {
       }
       (impls, reports)
     } else {
-      let parser : @parser.Parser = if engine == 0 { Handrolled } else { MoonYacc }
+      let parser : @parser.Parser = if engine == 0 {
+        Handrolled
+      } else {
+        MoonYacc
+      }
       @parser.parse_string(source, name="case.mbt", parser~)
     }
     let slices = make_slices(source)
