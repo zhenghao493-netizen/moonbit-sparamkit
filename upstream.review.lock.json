@@ -1,0 +1,8 @@
+{
+  "repository": "moonbitlang/parser",
+  "commit": "c1174741f8fd5c9b827af7b9148884413e5ebfdd",
+  "compiler": "v0.10.14+7d59c7ec9",
+  "historical_baseline": "a01fd77e599c12cf9a2182df3456990e74f53ced",
+  "reason": "Refresh the two candidate location fixes after CST lowering moved into untyped_cst/internal/lower.",
+  "issues": [188, 189]
+}
