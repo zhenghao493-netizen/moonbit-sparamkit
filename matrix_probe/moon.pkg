@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/parser" @parser,
+  "moonbitlang/parser/syntax",
+  "moonbitlang/parser/untyped_cst" @cst,
+  "moonbitlang/lexer/basic",
+}
+
+supported_targets = "js"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "js": { "format": "iife" } },
+)

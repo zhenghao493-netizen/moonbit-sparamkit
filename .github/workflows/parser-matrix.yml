@@ -1,0 +1,47 @@
+name: Pattern location composition matrix
+on:
+  push:
+    branches: [reselect/parser-conformance]
+    paths: ['matrix_probe/**', 'tools/location_cases.py', 'tools/location_matrix.cjs', 'tools/test_location*.py', 'patches/current/**', 'upstream.review.lock.json', '.github/workflows/parser-matrix.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: moonbitlang/parser
+          ref: c1174741f8fd5c9b827af7b9148884413e5ebfdd
+          path: upstream
+          persist-credentials: false
+      - name: Check matrix generation and reporting
+        run: |
+          python tools/test_location_cases.py
+          node --check tools/location_matrix.cjs
+      - name: Install MoonBit
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 90 --retry 2 https://cli.moonbitlang.com/install/unix.sh -o /tmp/moon-install.sh
+          bash /tmp/moon-install.sh
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Compare baseline, each fix and both fixes on the same corpus
+        run: python tools/test_location_matrix.py upstream
+      - name: Retain exact inputs, ASTs, comparisons and command logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser-location-matrix
+          path: reports/location-matrix/
+          retention-days: 30
