@@ -160,6 +160,7 @@ def main() -> int:
             shutil.copytree(ROOT/'matrix_probe', probe)
             run('format-probe', ['moon', 'fmt', 'parsercheck_matrix_probe'], work)
             shutil.copytree(probe, out/'formatted-probe')
+            run('probe-unit-tests', ['moon', 'test', 'parsercheck_matrix_probe', '--target', 'js', '--deny-warn'], work, timeout=600)
             baseline_semantics = None
             for variant, sign, group in VARIANTS:
                 selected = [name for name, use in zip(PATCHES, (sign, group)) if use]

@@ -2,7 +2,7 @@
 
 ///|
 struct PatternSlices {
-  source : String
+  source : Array[Char]
   constants : Array[String]
   constraints : Array[String]
 }
@@ -11,13 +11,32 @@ struct PatternSlices {
 extend PatternSlices with @syntax.IterVisitor::{base, visit_Impl}
 
 ///|
+fn make_slices(source : String) -> PatternSlices {
+  let chars : Array[Char] = []
+  for ch in source.iter() {
+    chars.push(ch)
+  }
+  { source: chars, constants: [], constraints: [] }
+}
+
+///|
+fn PatternSlices::fragment(self, start : Int, end : Int) -> String {
+  // Parser cnum counts Unicode scalar values, not UTF-16 string code units.
+  let mut result = ""
+  for i = start; i < end; i = i + 1 {
+    result += "\{self.source[i]}"
+  }
+  result
+}
+
+///|
 impl @syntax.IterVisitor for PatternSlices with fn visit_Pattern_Constant(
   self,
   c~,
   loc~,
 ) {
   ignore(c)
-  self.constants.push(self.source[loc.start.cnum:loc.end.cnum].to_owned())
+  self.constants.push(self.fragment(loc.start.cnum, loc.end.cnum))
 }
 
 ///|
@@ -27,7 +46,7 @@ impl @syntax.IterVisitor for PatternSlices with fn visit_Pattern_Constraint(
   ty~,
   loc~,
 ) {
-  self.constraints.push(self.source[loc.start.cnum:loc.end.cnum].to_owned())
+  self.constraints.push(self.fragment(loc.start.cnum, loc.end.cnum))
   @syntax.IterVisitor::visit_Pattern_Constraint(self.base(), pat~, ty~, loc~)
 }
 
@@ -49,7 +68,7 @@ fn inspect_patterns(source : String, engine : Int) -> String {
       let parser : @parser.Parser = if engine == 0 { Handrolled } else { MoonYacc }
       @parser.parse_string(source, name="case.mbt", parser~)
     }
-    let slices : PatternSlices = { source, constants: [], constraints: [] }
+    let slices = make_slices(source)
     for impl_ in impls {
       slices.visit_Impl(impl_)
     }

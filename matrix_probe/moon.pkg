@@ -12,3 +12,7 @@ pkgtype(kind: "executable")
 options(
   link: { "js": { "format": "iife" } },
 )
+
+import {
+  "moonbitlang/core/test",
+} for "test"
